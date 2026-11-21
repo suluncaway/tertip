@@ -73,20 +73,21 @@ const NAV_ITEMS: NavItemConfig[] = [
 
 const TertipMark: React.FC = () => (
   <span
-    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tertip-radius-sm)] bg-[var(--tertip-accent)] text-[var(--tertip-accent-ink)] ring-1 ring-[var(--tertip-border)]/50 shadow-[var(--tertip-shadow-xs)]"
+    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tertip-radius-sm)] bg-[var(--tertip-bg)] ring-1 ring-[var(--tertip-border)] shadow-[var(--tertip-shadow-xs)]"
     aria-hidden="true"
   >
     <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
+      width="26"
+      height="26"
+      viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect x="3" y="4" width="18" height="3.5" rx="1.5" fill="var(--tertip-gold)" />
-      <rect x="3" y="10.25" width="7.5" height="9.75" rx="1.75" fill="currentColor" fillOpacity="0.95" />
-      <rect x="13" y="10.25" width="8" height="4" rx="1.5" fill="var(--tertip-sand)" fillOpacity="0.8" />
-      <rect x="13" y="16" width="8" height="4" rx="1.5" fill="var(--tertip-gold)" />
+      <path d="M12 12H52V26H45V21H37V52H27V21H19V26H12V12Z" fill="var(--tertip-accent)" />
+      <rect x="12" y="29" width="11" height="4.5" fill="var(--tertip-sand)" />
+      <rect x="19" y="36.5" width="4" height="15.5" fill="var(--tertip-sand)" />
+      <rect x="41" y="29" width="11" height="4.5" fill="var(--tertip-gold)" />
+      <rect x="41" y="36.5" width="4" height="15.5" fill="var(--tertip-sand)" />
     </svg>
   </span>
 );

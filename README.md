@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./public/tertip-logo.jpg" alt="Tertip — Yerel Operasyon Zekâsı" width="220" />
+</p>
+
 # Tertip
 
 **%100 yerel, sunucusuz, gizlilik odaklı iş operasyonları, belge analizi, OCR ve raporlama platformu.**
