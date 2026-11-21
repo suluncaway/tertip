@@ -21,3 +21,12 @@ export type { ProgressBarProps, ProgressTone } from './ProgressBar';
 
 export { SectionHeader } from './SectionHeader';
 export type { SectionHeaderProps } from './SectionHeader';
+
+export { MorningBriefingCard } from './MorningBriefingCard';
+export type { MorningBriefingCardProps } from './MorningBriefingCard';
+
+export { AuditReadinessGauge } from './AuditReadinessGauge';
+export type { AuditReadinessGaugeProps, AuditMissingItem } from './AuditReadinessGauge';
+
+export { SectorPackPicker } from './SectorPackPicker';
+export type { SectorPackPickerProps, SectorPackOption } from './SectorPackPicker';

@@ -7,8 +7,10 @@ import { OperationsView } from './features/operations/OperationsView';
 import { AssistantView } from './features/assistant/AssistantView';
 import { PrivacyView } from './features/privacy/PrivacyView';
 import {
+  computeAuditReadiness,
   createEmptyWorkspaceState,
   createHospitalDemoState,
+  getSectorPackById,
   ingestFiles,
   mergeChartSeries,
 } from './lib';
@@ -29,22 +31,31 @@ function generateLocalId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
-export function App() {
-  // 100% RAM-only workspace state (zero localStorage / zero server)
-  const [workspace, setWorkspace] = useState<WorkspaceState>(() =>
-    createEmptyWorkspaceState('Tertip Çalışma Alanı', 'İşletme & Operasyon')
-  );
-  const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches
-    ) {
-      return 'dark';
+function getInitialPackFromUrl(): { state: WorkspaceState; packId: string | null } {
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    const packParam = params.get('pack')?.trim().toLowerCase();
+    if (packParam) {
+      const pack = getSectorPackById(packParam);
+      if (pack) {
+        return { state: pack.createState(), packId: pack.id };
+      }
     }
-    return 'light';
-  });
+  }
+  return {
+    state: createEmptyWorkspaceState('Tertip Çalışma Alanı', 'İşletme & Operasyon'),
+    packId: null,
+  };
+}
+
+export function App() {
+  const initialPack = useMemo(() => getInitialPackFromUrl(), []);
+
+  // 100% RAM-only workspace state (zero localStorage / zero server)
+  const [workspace, setWorkspace] = useState<WorkspaceState>(initialPack.state);
+  const [activePackId, setActivePackId] = useState<string | null>(initialPack.packId);
+  const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [ingestProgress, setIngestProgress] = useState<IngestProgress | null>(
     null
   );
@@ -70,8 +81,20 @@ export function App() {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   }, []);
 
+  const handleSelectSectorPack = useCallback(
+    (packId: string) => {
+      const pack = getSectorPackById(packId);
+      if (!pack) return;
+      setWorkspace(pack.createState());
+      setActivePackId(pack.id);
+      showToast(`"${pack.name}" sektörel örnek paketi RAM belleğe yüklendi.`);
+    },
+    [showToast]
+  );
+
   const handleLoadDemo = useCallback(() => {
     setWorkspace(createHospitalDemoState());
+    setActivePackId('hastane');
     showToast('Örnek hastane operasyon verisi belleğe (RAM) yüklendi.');
   }, [showToast]);
 
@@ -235,6 +258,7 @@ export function App() {
   const handleRestoreWorkspace = useCallback(
     (restored: WorkspaceState) => {
       setWorkspace(restored);
+      setActivePackId(null);
       showToast(`"${restored.workspaceName}" başarıyla geri yüklendi.`);
     },
     [showToast]
@@ -244,6 +268,7 @@ export function App() {
     setWorkspace(
       createEmptyWorkspaceState('Tertip Çalışma Alanı', 'İşletme & Operasyon')
     );
+    setActivePackId(null);
     showToast('Tüm veriler RAM bellekten temizlendi.');
   }, [showToast]);
 
@@ -252,6 +277,11 @@ export function App() {
     workspace.chartSeries.length === 0 &&
     workspace.reminders.length === 0 &&
     workspace.assets.length === 0;
+
+  const auditReadiness = useMemo(
+    () => computeAuditReadiness(workspace),
+    [workspace]
+  );
 
   const navBadges = useMemo(() => {
     const openReminders = workspace.reminders.filter((r) => !r.completed).length;
@@ -294,6 +324,8 @@ export function App() {
         {activeTab === 'dashboard' && (
           <DashboardView
             workspace={workspace}
+            activePackId={activePackId}
+            onSelectSectorPack={handleSelectSectorPack}
             onNavigate={setActiveTab}
             onUploadClick={handleGlobalUploadClick}
             onLoadDemo={handleLoadDemo}
@@ -303,6 +335,7 @@ export function App() {
 
         {activeTab === 'documents' && (
           <DocumentsView
+            workspace={workspace}
             documents={workspace.documents}
             ingestProgress={ingestProgress}
             onIngestFiles={(files) => void handleIngestFiles(files)}
@@ -315,6 +348,7 @@ export function App() {
           <OperationsView
             reminders={workspace.reminders}
             assets={workspace.assets}
+            assetMissingIds={auditReadiness.assetMissingIds}
             onToggleReminder={handleToggleReminder}
             onAddReminder={handleAddReminder}
             onDeleteReminder={handleDeleteReminder}

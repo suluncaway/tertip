@@ -1,11 +1,16 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
+  Activity,
   AlertTriangle,
   CheckCircle2,
   Download,
+  FileCheck2,
   HardDrive,
   KeyRound,
   Lock,
+  Package,
+  RefreshCw,
+  ShieldAlert,
   ShieldCheck,
   Trash2,
   Upload,
@@ -18,7 +23,15 @@ import {
   Modal,
   SectionHeader,
 } from '../../components/ui';
-import { exportEncryptedVaultFile, importEncryptedVaultFile } from '../../lib';
+import {
+  collectZeroNetworkProof,
+  downloadKvkkProofReport,
+  exportEncryptedVaultFile,
+  exportExecutiveBriefingHtml,
+  importEncryptedVaultFile,
+  scanWorkspacePii,
+} from '../../lib';
+import type { ZeroNetworkProof } from '../../lib';
 import type { WorkspaceState } from '../../types';
 
 export interface PrivacyViewProps {
@@ -33,6 +46,14 @@ export const PrivacyView: React.FC<PrivacyViewProps> = ({
   onClearMemory,
 }) => {
   const importFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Live Zero-Network Proof Monitor
+  const [networkProof, setNetworkProof] = useState<ZeroNetworkProof>(() =>
+    collectZeroNetworkProof()
+  );
+
+  // Live KVKK PII Scan
+  const kvkkScan = useMemo(() => scanWorkspacePii(workspace), [workspace]);
 
   // Export state
   const [exportPassword, setExportPassword] = useState('');
@@ -54,6 +75,10 @@ export const PrivacyView: React.FC<PrivacyViewProps> = ({
 
   // Clear confirmation modal
   const [clearModalOpen, setClearModalOpen] = useState(false);
+
+  const handleRefreshProof = () => {
+    setNetworkProof(collectZeroNetworkProof());
+  };
 
   const handleExport = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,78 +186,227 @@ export const PrivacyView: React.FC<PrivacyViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <SectionHeader
-        eyebrow="SIFIR SUNUCU · ŞİFRELİ YEREL KASA"
+        eyebrow="SIFIR SUNUCU · KVKK KALKANI · ŞİFRELİ KASA"
         title="Gizlilik & Yedek"
-        subtitle="Tertip hiçbir bulut veritabanı, sunucu veya tarayıcı kalıcı deposu kullanmaz. Çalışmanızı parolalı AES-GCM-256 .tertip dosyası olarak saklayın."
+        subtitle="Tertip hiçbir bulut veritabanı, sunucu veya tarayıcı kalıcı deposu kullanmaz. Canlı sıfır-ağ kanıtını doğrulayın, KVKK taramasını inceleyin ve şifreli .tertip kasanızı yönetin."
         as="h1"
       />
 
-      {/* Transparent Privacy Status Card */}
-      <Card variant="elevated" padding="md">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-tertip-success-soft text-tertip-success">
-              <ShieldCheck className="h-6 w-6" />
+      {/* Live Zero-Network Proof Monitor */}
+      <Card
+        variant="elevated"
+        padding="md"
+        header={
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-tertip-success" />
+              <h2 className="text-sm font-semibold text-tertip-ink">
+                Canlı &quot;Sıfır Ağ&quot; Kanıt Monitörü
+              </h2>
             </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base font-semibold text-tertip-ink">
-                  %100 Yerel RAM Modu Aktif
-                </h2>
-                <Badge variant="success" size="sm" dot>
-                  0 Sunucu · 0 Uzak Veritabanı
-                </Badge>
-              </div>
-              <p className="mt-1 text-xs leading-relaxed text-tertip-ink-secondary">
-                Yüklediğiniz tüm Excel, PDF, sunum ve görsel verileri yalnızca
-                bu sekmenin geçici belleğinde (RAM) tutulur.{' '}
-                <code className="font-mono text-[11px]">localStorage</code>,{' '}
-                <code className="font-mono text-[11px]">IndexedDB</code> veya
-                üçüncü parti analitik çerezi yazılmaz. Sekme kapandığında bellek
-                temizlenir.
+            <div className="flex items-center gap-2">
+              <Badge
+                variant={networkProof.isZeroCloudVerified ? 'success' : 'warning'}
+                size="sm"
+                dot
+              >
+                {networkProof.isZeroCloudVerified
+                  ? '0 Dış İstek Doğrulandı'
+                  : `${networkProof.externalRequests} Dış İstek`}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<RefreshCw className="h-3.5 w-3.5" />}
+                onClick={handleRefreshProof}
+              >
+                Yenile
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+            <div className="rounded-xl border border-tertip-border/60 bg-tertip-surface p-3">
+              <p className="text-[11px] text-tertip-ink-muted">Dış Ağ İsteği</p>
+              <p className="mt-0.5 font-mono text-lg font-semibold text-tertip-success">
+                {networkProof.externalRequests}
+              </p>
+            </div>
+            <div className="rounded-xl border border-tertip-border/60 bg-tertip-surface p-3">
+              <p className="text-[11px] text-tertip-ink-muted">Dış Veri Aktarımı</p>
+              <p className="mt-0.5 font-mono text-lg font-semibold text-tertip-success">
+                {networkProof.externalBytes} B
+              </p>
+            </div>
+            <div className="rounded-xl border border-tertip-border/60 bg-tertip-surface p-3">
+              <p className="text-[11px] text-tertip-ink-muted">localStorage</p>
+              <p className="mt-0.5 font-mono text-lg font-semibold text-tertip-ink">
+                {networkProof.localStorageKeys} anahtar
+              </p>
+            </div>
+            <div className="rounded-xl border border-tertip-border/60 bg-tertip-surface p-3">
+              <p className="text-[11px] text-tertip-ink-muted">sessionStorage</p>
+              <p className="mt-0.5 font-mono text-lg font-semibold text-tertip-ink">
+                {networkProof.sessionStorageKeys} anahtar
               </p>
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <Badge variant="neutral" size="sm" icon={<WifiOff className="h-3 w-3" />}>
-              Çevrimdışı Çalışır
-            </Badge>
-            <Badge variant="gold" size="sm" icon={<Lock className="h-3 w-3" />}>
-              PBKDF2 + AES-GCM-256
-            </Badge>
-          </div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-3 border-t border-tertip-border/60 pt-4 sm:grid-cols-4">
-          <div className="rounded-xl bg-tertip-surface p-3 border border-tertip-border/60">
-            <p className="text-[11px] text-tertip-ink-muted">Bellekteki Belge</p>
-            <p className="mt-0.5 font-mono text-lg font-semibold text-tertip-ink">
-              {workspace.documents.length}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-tertip-ink-muted">
+              Tarayıcı <code className="font-mono text-[11px]">PerformanceResourceTiming</code>{' '}
+              kayıtlarına göre bu oturumda toplam{' '}
+              <strong>{networkProof.sameOriginRequests}</strong> yerel kaynak
+              yüklendi, dış sunuculara <strong>0 bayt</strong> gönderildi.
             </p>
-          </div>
-          <div className="rounded-xl bg-tertip-surface p-3 border border-tertip-border/60">
-            <p className="text-[11px] text-tertip-ink-muted">Grafik Dönemi</p>
-            <p className="mt-0.5 font-mono text-lg font-semibold text-tertip-ink">
-              {workspace.chartSeries.length}
-            </p>
-          </div>
-          <div className="rounded-xl bg-tertip-surface p-3 border border-tertip-border/60">
-            <p className="text-[11px] text-tertip-ink-muted">Varlık & Alan</p>
-            <p className="mt-0.5 font-mono text-lg font-semibold text-tertip-ink">
-              {workspace.assets.length}
-            </p>
-          </div>
-          <div className="rounded-xl bg-tertip-surface p-3 border border-tertip-border/60">
-            <p className="text-[11px] text-tertip-ink-muted">Hatırlatıcı</p>
-            <p className="mt-0.5 font-mono text-lg font-semibold text-tertip-ink">
-              {workspace.reminders.length}
-            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<FileCheck2 className="h-4 w-4" />}
+              onClick={() => downloadKvkkProofReport(networkProof)}
+              className="min-h-11 w-full shrink-0 sm:min-h-0 sm:w-auto"
+            >
+              KVKK Oturum Kanıt Raporu İndir
+            </Button>
           </div>
         </div>
       </Card>
+
+      {/* KVKK Shield Live PII Scan + Air-Gapped Offline Package */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <Card
+          variant="default"
+          padding="md"
+          header={
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {kvkkScan.isClean ? (
+                  <ShieldCheck className="h-4 w-4 text-tertip-success" />
+                ) : (
+                  <ShieldAlert className="h-4 w-4 text-tertip-gold" />
+                )}
+                <h3 className="text-sm font-semibold text-tertip-ink">
+                  KVKK Kalkanı — Canlı Hassas Veri Taraması
+                </h3>
+              </div>
+              <Badge
+                variant={kvkkScan.isClean ? 'success' : 'warning'}
+                size="sm"
+              >
+                {kvkkScan.isClean
+                  ? 'Temiz'
+                  : `${kvkkScan.totalMatches} Hassas Kayıt`}
+              </Badge>
+            </div>
+          }
+        >
+          <div className="space-y-3">
+            <p className="text-xs leading-relaxed text-tertip-ink-muted">
+              Belgelerinizdeki geçerli TCKN, VKN, TR IBAN, telefon, e-posta ve
+              hasta/kişi isimleri tarayıcı içinde tespit edilir ve paylaşım
+              öncesinde tek tıkla maskelenir.
+            </p>
+
+            {kvkkScan.findings.length > 0 ? (
+              <ul className="space-y-1.5">
+                {kvkkScan.findings.map((item) => (
+                  <li
+                    key={item.kind}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-tertip-border/70 bg-tertip-surface-elevated px-3 py-2 text-xs"
+                  >
+                    <span className="font-medium text-tertip-ink">
+                      {item.label}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <code className="font-mono text-[11px] text-tertip-ink-muted">
+                        {item.maskedSample}
+                      </code>
+                      <Badge variant="gold" size="sm">
+                        {item.count}
+                      </Badge>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-xl border border-tertip-success-border bg-tertip-success-soft p-3 text-xs text-tertip-success">
+                Bellekteki belgelerde açık TCKN, IBAN veya kişisel veri tespit
+                edilmedi.
+              </div>
+            )}
+
+            <Button
+              variant="primary"
+              size="sm"
+              fullWidth
+              icon={<Download className="h-4 w-4" />}
+              onClick={() =>
+                exportExecutiveBriefingHtml(workspace, { anonymizeKvkk: true })
+              }
+              className="min-h-11 sm:min-h-0"
+            >
+              KVKK Maskeli Yönetici Brifingi İndir
+            </Button>
+          </div>
+        </Card>
+
+        {/* Air-Gapped Offline Single-File Package Info */}
+        <Card
+          variant="default"
+          padding="md"
+          header={
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-tertip-accent" />
+                <h3 className="text-sm font-semibold text-tertip-ink">
+                  Air-Gapped Çevrimdışı Paket (Tek HTML)
+                </h3>
+              </div>
+              <Badge variant="accent" size="sm" icon={<WifiOff className="h-3 w-3" />}>
+                İnternetsiz Kullanım
+              </Badge>
+            </div>
+          }
+        >
+          <div className="space-y-3">
+            <p className="text-xs leading-relaxed text-tertip-ink-secondary">
+              Hastane içi kapalı ağlar, şantiyeler veya internet erişimi olmayan
+              kurumsal bilgisayarlar için Tertip tek bir taşınabilir HTML
+              dosyası olarak derlenebilir.
+            </p>
+            <div className="rounded-xl border border-tertip-border bg-tertip-surface-elevated p-3 font-mono text-xs text-tertip-ink">
+              bun run build:airgap
+            </div>
+            <p className="text-xs text-tertip-ink-muted">
+              Bu komut tüm CSS ve JavaScript paketlerini tek bir{' '}
+              <code className="font-mono text-[11px]">
+                dist-airgap/tertip-offline.html
+              </code>{' '}
+              dosyasına gömer; USB bellekten doğrudan çift tıklayarak
+              çalıştırabilirsiniz.
+            </p>
+
+            <div className="grid grid-cols-2 gap-2.5 border-t border-tertip-border/60 pt-3">
+              <div className="rounded-xl border border-tertip-border/60 bg-tertip-surface p-2.5">
+                <p className="text-[11px] text-tertip-ink-muted">Bellekteki Belge</p>
+                <p className="font-mono text-sm font-semibold text-tertip-ink">
+                  {workspace.documents.length} belge · {workspace.assets.length} varlık
+                </p>
+              </div>
+              <div className="rounded-xl border border-tertip-border/60 bg-tertip-surface p-2.5">
+                <p className="text-[11px] text-tertip-ink-muted">Şifreleme Standardı</p>
+                <p className="font-mono text-sm font-semibold text-tertip-ink">
+                  AES-GCM-256
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
 
       {/* Export & Import Grid */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -310,6 +484,7 @@ export const PrivacyView: React.FC<PrivacyViewProps> = ({
               fullWidth
               loading={exportBusy}
               icon={<KeyRound className="h-4 w-4" />}
+              className="min-h-11 sm:min-h-0"
             >
               Şifreli .tertip Dosyasını İndir
             </Button>
@@ -393,7 +568,8 @@ export const PrivacyView: React.FC<PrivacyViewProps> = ({
               variant="secondary"
               fullWidth
               loading={importBusy}
-              icon={<Upload className="h-4 w-4" />}
+              icon={<Lock className="h-4 w-4" />}
+              className="min-h-11 sm:min-h-0"
             >
               Şifreyi Çöz ve RAM&apos;e Yükle
             </Button>

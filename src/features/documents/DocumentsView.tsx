@@ -1,14 +1,21 @@
 import React, { useMemo, useRef, useState } from 'react';
 import {
+  AlertTriangle,
+  Camera,
+  ChevronDown,
+  ChevronUp,
   Database,
   Eye,
   FileImage,
   FileSpreadsheet,
   FileText,
+  Play,
   Presentation,
+  Radar,
   ScanText,
   Search,
   Table2,
+  Terminal,
   Trash2,
   UploadCloud,
 } from 'lucide-react';
@@ -21,10 +28,17 @@ import {
   ProgressBar,
   SectionHeader,
 } from '../../components/ui';
-import type { IngestProgress } from '../../lib';
-import type { DocumentKind, TertipDocument } from '../../types';
+import {
+  enhanceDocumentImage,
+  extractTurkishInvoiceSutFields,
+  runCrossDocumentAudit,
+  runLocalTableQuery,
+} from '../../lib';
+import type { IngestProgress, LocalQueryResult } from '../../lib';
+import type { DocumentKind, TertipDocument, WorkspaceState } from '../../types';
 
 export interface DocumentsViewProps {
+  workspace: WorkspaceState;
   documents: TertipDocument[];
   ingestProgress: IngestProgress | null;
   onIngestFiles: (files: File[]) => void;
@@ -94,6 +108,7 @@ function formatDateTimeTr(iso: string): string {
 }
 
 export const DocumentsView: React.FC<DocumentsViewProps> = ({
+  workspace,
   documents,
   ingestProgress,
   onIngestFiles,
@@ -101,11 +116,40 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
   onLoadDemo,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
   const [isDragging, setIsDragging] = useState(false);
+  const [cameraBusy, setCameraBusy] = useState(false);
   const [search, setSearch] = useState('');
   const [kindFilter, setKindFilter] = useState<'all' | DocumentKind>('all');
   const [previewDoc, setPreviewDoc] = useState<TertipDocument | null>(null);
   const [previewTab, setPreviewTab] = useState<'tables' | 'text'>('tables');
+
+  // Local SQL Console state
+  const [sqlOpen, setSqlOpen] = useState(false);
+  const [sqlInput, setSqlInput] = useState('SHOW TABLES');
+  const [sqlResult, setSqlResult] = useState<LocalQueryResult | null>(null);
+
+  const crossAudit = useMemo(
+    () => runCrossDocumentAudit(workspace),
+    [workspace]
+  );
+
+  const firstTableName = useMemo(() => {
+    for (const d of documents) {
+      if (d.tables.length > 0) return d.tables[0].name;
+    }
+    return null;
+  }, [documents]);
+
+  const sqlPresets = useMemo(() => {
+    const presets = ['SHOW TABLES'];
+    if (firstTableName) {
+      presets.push(`SELECT * FROM "${firstTableName}" LIMIT 10`);
+      presets.push(`SELECT COUNT(*) FROM "${firstTableName}"`);
+    }
+    return presets;
+  }, [firstTableName]);
 
   const filteredDocuments = useMemo(() => {
     const q = search.trim().toLocaleLowerCase('tr-TR');
@@ -126,6 +170,31 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleCameraCapture = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    setCameraBusy(true);
+    try {
+      const enhanced: File[] = [];
+      for (const file of Array.from(fileList)) {
+        const improved = await enhanceDocumentImage(file);
+        enhanced.push(improved);
+      }
+      onIngestFiles(enhanced);
+    } finally {
+      setCameraBusy(false);
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRunSql = (queryText?: string) => {
+    const q = (queryText ?? sqlInput).trim();
+    if (!q) return;
+    if (queryText) setSqlInput(queryText);
+    setSqlResult(runLocalTableQuery(documents, q));
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -156,17 +225,38 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <SectionHeader
-        eyebrow="YEREL BELGE ZEKÂSI & OCR"
+        eyebrow="YEREL BELGE ZEKÂSI, OCR & SQL"
         title="Belgeler"
-        subtitle="Excel, CSV, PDF, PowerPoint ve taranmış görselleri sürükleyip bırakın. Tüm çözümleme, tablo çıkarımı ve Türkçe OCR işlemleri %100 tarayıcınızda çalışır."
+        subtitle="Excel, CSV, PDF, PowerPoint ve taranmış fatura/fişleri yükleyin. Çapraz belge denetimi, VKN/KDV/SUT çıkarımı ve yerel SQL sorguları %100 tarayıcınızda çalışır."
         as="h1"
         badge={
           <Badge variant="accent" size="sm">
             {documents.length} Belge Bellekte
           </Badge>
         }
+        actions={
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={cameraBusy}
+            icon={<Camera className="h-4 w-4" />}
+            onClick={() => cameraInputRef.current?.click()}
+          >
+            Akıllı Kamera / Fatura OCR
+          </Button>
+        }
+      />
+
+      {/* Hidden camera input with rear-camera capture + canvas enhancement */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => void handleCameraCapture(e.target.files)}
       />
 
       {/* Compact Mobile Upload Bar + Desktop Drag & Drop Multi-file Dropzone */}
@@ -199,7 +289,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
         />
 
         {/* Mobile-first compact upload bar */}
-        <div className="flex flex-col items-center gap-3 sm:hidden">
+        <div className="flex flex-col items-center gap-2.5 sm:hidden">
           <div className="flex w-full items-center gap-3 text-left">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-tertip-accent-soft text-tertip-accent">
               <UploadCloud className="h-5 w-5" />
@@ -209,14 +299,27 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
                 Dosya / Fotoğraf Seç
               </p>
               <p className="truncate text-[11px] text-tertip-ink-muted">
-                Excel, PDF, PPTX, görsel (OCR) · %100 yerel
+                Excel, PDF, PPTX, Fatura/SUT OCR · %100 yerel
               </p>
             </div>
           </div>
-          <span className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-tertip-accent px-4 py-2.5 text-sm font-medium text-tertip-accent-ink">
-            <UploadCloud className="h-4 w-4" />
-            Belge veya Fotoğraf Yükle
-          </span>
+          <div className="grid w-full grid-cols-2 gap-2">
+            <span className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-tertip-accent px-3 py-2 text-xs font-medium text-tertip-accent-ink">
+              <UploadCloud className="h-4 w-4" />
+              Belge Seç
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                cameraInputRef.current?.click();
+              }}
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-tertip-border bg-tertip-surface-elevated px-3 py-2 text-xs font-medium text-tertip-ink"
+            >
+              <Camera className="h-4 w-4 text-tertip-gold" />
+              Fatura Tara
+            </button>
+          </div>
         </div>
 
         {/* Desktop drag-and-drop view */}
@@ -240,7 +343,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
               Tablo & Grafik Çıkarımı
             </Badge>
             <Badge variant="gold" size="sm">
-              Otomatik Bakım & SUT Tarih Tespiti
+              VKN / KDV / SUT Fatura Tespiti
             </Badge>
             <Badge variant="info" size="sm">
               Türkçe + İngilizce Görsel OCR
@@ -260,6 +363,218 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
             label={`İşleniyor (${ingestProgress.fileIndex}/${ingestProgress.totalFiles}): ${ingestProgress.fileName}`}
             hint={ingestProgress.status}
           />
+        </Card>
+      )}
+
+      {/* Cross-Document Audit & Leakage Radar */}
+      {documents.length > 0 && (
+        <Card
+          variant="elevated"
+          padding="md"
+          header={
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Radar className="h-4 w-4 text-tertip-gold" />
+                <h2 className="text-sm font-semibold text-tertip-ink">
+                  Çapraz Belge Denetim & Sızıntı Radarı
+                </h2>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Badge
+                  variant={crossAudit.findings.length > 0 ? 'warning' : 'success'}
+                  size="sm"
+                >
+                  {crossAudit.findings.length} Bulgu
+                </Badge>
+                {crossAudit.discrepancyCount > 0 && (
+                  <Badge variant="danger" size="sm">
+                    {crossAudit.discrepancyCount} Uyuşmazlık
+                  </Badge>
+                )}
+                {crossAudit.duplicateCount > 0 && (
+                  <Badge variant="warning" size="sm">
+                    {crossAudit.duplicateCount} Mükerrer
+                  </Badge>
+                )}
+                {crossAudit.anomalyCount > 0 && (
+                  <Badge variant="gold" size="sm">
+                    {crossAudit.anomalyCount} Anomali
+                  </Badge>
+                )}
+              </div>
+            </div>
+          }
+        >
+          {crossAudit.findings.length === 0 ? (
+            <p className="text-xs text-tertip-ink-secondary">
+              Yüklenen belgeler arasında tutarsızlık, mükerrer fatura veya
+              anormal maliyet sapması tespit edilmedi.
+            </p>
+          ) : (
+            <ul className="space-y-2.5">
+              {crossAudit.findings.slice(0, 5).map((finding) => (
+                <li
+                  key={finding.id}
+                  className="flex items-start justify-between gap-3 rounded-xl border border-tertip-border bg-tertip-surface p-3"
+                >
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <AlertTriangle
+                      className={`mt-0.5 h-4 w-4 shrink-0 ${
+                        finding.severity === 'high'
+                          ? 'text-tertip-danger'
+                          : 'text-tertip-gold'
+                      }`}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-tertip-ink">
+                        {finding.title}
+                      </p>
+                      <p className="mt-0.5 text-xs text-tertip-ink-muted">
+                        {finding.detail}
+                      </p>
+                    </div>
+                  </div>
+                  {finding.metricValue && (
+                    <Badge
+                      variant={
+                        finding.severity === 'high' ? 'danger' : 'warning'
+                      }
+                      size="sm"
+                    >
+                      {finding.metricValue}
+                    </Badge>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      )}
+
+      {/* Collapsible Local SQL Query Console */}
+      {documents.length > 0 && (
+        <Card variant="default" padding="none">
+          <button
+            type="button"
+            onClick={() => setSqlOpen((prev) => !prev)}
+            className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-tertip-surface-elevated"
+          >
+            <div className="flex items-center gap-2.5">
+              <Terminal className="h-4 w-4 text-tertip-accent" />
+              <div>
+                <p className="text-sm font-semibold text-tertip-ink">
+                  Yerel SQL Sorgu Konsolu
+                </p>
+                <p className="text-[11px] text-tertip-ink-muted">
+                  Çıkarılan tüm Excel/PDF tablolarında sunucusuz anlık SQL sorgusu çalıştırın
+                </p>
+              </div>
+            </div>
+            {sqlOpen ? (
+              <ChevronUp className="h-4 w-4 text-tertip-ink-muted" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-tertip-ink-muted" />
+            )}
+          </button>
+
+          {sqlOpen && (
+            <div className="space-y-3 border-t border-tertip-border p-4">
+              <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:overflow-visible sm:pb-0">
+                {sqlPresets.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => handleRunSql(preset)}
+                    className="shrink-0 whitespace-nowrap rounded-full border border-tertip-border bg-tertip-surface-elevated px-3 py-1 font-mono text-[11px] text-tertip-ink-secondary hover:border-tertip-accent hover:text-tertip-accent"
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="text"
+                  value={sqlInput}
+                  onChange={(e) => setSqlInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleRunSql();
+                  }}
+                  placeholder='SHOW TABLES veya SELECT * FROM "Tablo" LIMIT 10'
+                  className="min-h-11 flex-1 rounded-xl border border-tertip-border bg-tertip-surface-elevated px-3.5 py-2 font-mono text-xs text-tertip-ink focus:border-tertip-accent focus:outline-none"
+                />
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={<Play className="h-3.5 w-3.5" />}
+                  onClick={() => handleRunSql()}
+                  className="min-h-11 sm:min-h-0"
+                >
+                  Çalıştır
+                </Button>
+              </div>
+
+              {sqlResult && (
+                <div className="space-y-2">
+                  {sqlResult.error ? (
+                    <p className="rounded-xl border border-tertip-danger-border bg-tertip-danger-soft p-3 text-xs text-tertip-danger">
+                      {sqlResult.error}
+                    </p>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between text-[11px] text-tertip-ink-muted">
+                        <span>
+                          {sqlResult.tableName
+                            ? `Tablo: ${sqlResult.tableName}`
+                            : 'Sorgu sonucu'}
+                        </span>
+                        <span className="font-mono">
+                          {sqlResult.rowCount} satır
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto rounded-xl border border-tertip-border">
+                        <table className="w-full border-collapse text-left text-xs">
+                          <thead className="bg-tertip-surface-subtle text-tertip-ink">
+                            <tr>
+                              {sqlResult.columns.map((col) => (
+                                <th
+                                  key={col}
+                                  className="whitespace-nowrap border-b border-tertip-border px-3 py-2 font-semibold"
+                                >
+                                  {col}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-tertip-border/50 bg-tertip-surface">
+                            {sqlResult.rows.slice(0, 30).map((row, idx) => (
+                              <tr key={idx}>
+                                {sqlResult.columns.map((col) => {
+                                  const val = row[col];
+                                  return (
+                                    <td
+                                      key={col}
+                                      className="whitespace-nowrap px-3 py-2 text-tertip-ink-secondary"
+                                    >
+                                      {val === null || val === undefined
+                                        ? '—'
+                                        : typeof val === 'number'
+                                          ? val.toLocaleString('tr-TR')
+                                          : String(val)}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       )}
 
@@ -336,6 +651,8 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {filteredDocuments.map((doc) => {
             const meta = KIND_META[doc.kind];
+            const invoiceFields = extractTurkishInvoiceSutFields(doc.rawText);
+
             return (
               <Card key={doc.id} variant="default" padding="md">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -400,6 +717,33 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
                 <p className="mt-3 text-xs leading-relaxed text-tertip-ink-secondary">
                   {doc.error ? `Hata: ${doc.error}` : doc.summary}
                 </p>
+
+                {/* Structured VKN / KDV / SUT badges */}
+                {invoiceFields.hasStructuredData && (
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    {invoiceFields.vknList.slice(0, 2).map((vkn) => (
+                      <Badge key={vkn} variant="gold" size="sm">
+                        VKN: {vkn}
+                      </Badge>
+                    ))}
+                    {invoiceFields.kdvRates.slice(0, 2).map((rate) => (
+                      <Badge key={rate} variant="neutral" size="sm">
+                        KDV %{rate}
+                      </Badge>
+                    ))}
+                    {invoiceFields.totalAmount !== null &&
+                      invoiceFields.totalAmount !== undefined && (
+                        <Badge variant="accent" size="sm">
+                          Toplam: ₺{invoiceFields.totalAmount.toLocaleString('tr-TR')}
+                        </Badge>
+                      )}
+                    {invoiceFields.sutCodes.slice(0, 2).map((code) => (
+                      <Badge key={code} variant="info" size="sm">
+                        SUT: {code}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
 
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-tertip-border/60 pt-3 text-[11px] text-tertip-ink-muted">
                   <div className="flex items-center gap-3">

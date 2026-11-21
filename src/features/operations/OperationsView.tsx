@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
+  AlertTriangle,
   Building2,
   CalendarClock,
   CheckCircle2,
@@ -24,6 +25,7 @@ import type { AssetItem, ReminderItem } from '../../types';
 export interface OperationsViewProps {
   reminders: ReminderItem[];
   assets: AssetItem[];
+  assetMissingIds?: string[];
   onToggleReminder: (id: string) => void;
   onAddReminder: (reminder: Omit<ReminderItem, 'id'>) => void;
   onDeleteReminder: (id: string) => void;
@@ -79,6 +81,7 @@ function getTodayIso(): string {
 export const OperationsView: React.FC<OperationsViewProps> = ({
   reminders,
   assets,
+  assetMissingIds = [],
   onToggleReminder,
   onAddReminder,
   onDeleteReminder,
@@ -86,6 +89,10 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
   onUpdateAssetStatus,
   onDeleteAsset,
 }) => {
+  const missingAssetSet = useMemo(
+    () => new Set(assetMissingIds),
+    [assetMissingIds]
+  );
   const [activeSection, setActiveSection] = useState<'reminders' | 'assets'>(
     'reminders'
   );
@@ -304,6 +311,10 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
             </label>
           </div>
 
+          <p className="text-[11px] text-tertip-ink-muted sm:hidden">
+            İpucu: Görevleri tamamlamak için soldaki daireye dokunun veya Genel Bakış&apos;taki zaman şeridinde sağa kaydırın.
+          </p>
+
           {filteredReminders.length === 0 ? (
             <Card variant="default" padding="lg">
               <EmptyState
@@ -491,6 +502,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {filteredAssets.map((asset) => {
                 const statusMeta = ASSET_STATUS_META[asset.status];
+                const hasMissingEvidence = missingAssetSet.has(asset.id);
                 return (
                   <Card key={asset.id} variant="default" padding="md">
                     <div className="flex items-start justify-between gap-3">
@@ -510,9 +522,20 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
                         </p>
                       </div>
 
-                      <Badge variant={statusMeta.variant} size="sm" dot>
-                        {statusMeta.label}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <Badge variant={statusMeta.variant} size="sm" dot>
+                          {statusMeta.label}
+                        </Badge>
+                        {hasMissingEvidence && (
+                          <Badge
+                            variant="warning"
+                            size="sm"
+                            icon={<AlertTriangle className="h-3 w-3" />}
+                          >
+                            Kanıt / Belge Eksik
+                          </Badge>
+                        )}
+                      </div>
                     </div>
 
                     {asset.notes && (

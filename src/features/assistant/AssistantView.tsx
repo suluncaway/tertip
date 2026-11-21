@@ -19,6 +19,8 @@ import {
   EmptyState,
   SectionHeader,
 } from '../../components/ui';
+import { semanticSearchDocuments } from '../../lib';
+import type { SemanticSearchHit } from '../../lib';
 import type { AiConfig, WorkspaceState } from '../../types';
 
 export interface AssistantViewProps {
@@ -31,6 +33,7 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   text: string;
   citations?: string[];
+  semanticHits?: SemanticSearchHit[];
   modeLabel?: string;
   timestamp: string;
 }
@@ -77,7 +80,7 @@ function renderRichText(text: string): React.ReactNode[] {
 function buildLocalAnswer(
   question: string,
   workspace: WorkspaceState
-): { text: string; citations: string[] } {
+): { text: string; citations: string[]; semanticHits: SemanticSearchHit[] } {
   const q = normalizeTr(question);
   const citations = new Set<string>();
   const sections: string[] = [];
@@ -92,8 +95,12 @@ function buildLocalAnswer(
     return {
       text: 'Bellekte henüz yüklü belge veya veri bulunmuyor. Excel, PDF, sunum veya görsel yükleyebilir ya da örnek hastane verisini aktif ederek analiz başlatabilirsiniz.',
       citations: [],
+      semanticHits: [],
     };
   }
+
+  const semanticHits = semanticSearchDocuments(workspace.documents, question, 3);
+  semanticHits.forEach((h) => citations.add(h.docName));
 
   // 1. Hasta / Hacim sorgusu
   if (
@@ -234,34 +241,15 @@ function buildLocalAnswer(
     }
   }
 
-  // 6. Fallback full-text & table search across all docs
+  // 6. Hybrid semantic search fallback (BM25 + char 3-gram cosine)
   if (sections.length === 0) {
-    const tokens = q
-      .split(/[^a-z0-9]+/)
-      .filter((t) => t.length >= 3 && !['neler', 'nedir', 'nasil', 'hangi', 'kac', 'icin', 'olan'].includes(t));
-
-    const matchedLines: string[] = [];
-
-    for (const doc of workspace.documents) {
-      const rawLines = doc.rawText
-        .split(/\r?\n/)
-        .map((l) => l.trim())
-        .filter((l) => l.length > 8);
-
-      for (const line of rawLines) {
-        const normLine = normalizeTr(line);
-        if (tokens.some((tok) => normLine.includes(tok))) {
-          matchedLines.push(`• (${doc.name}) ${line.slice(0, 180)}`);
-          citations.add(doc.name);
-          if (matchedLines.length >= 5) break;
-        }
-      }
-      if (matchedLines.length >= 5) break;
-    }
-
-    if (matchedLines.length > 0) {
+    if (semanticHits.length > 0) {
+      const lines = semanticHits.map(
+        (hit) =>
+          `• **${hit.docName}** (%${hit.score} eşleşme · ${hit.location}): ${hit.snippet}`
+      );
       sections.push(
-        `Belgelerinizde sorunuzla eşleşen kayıtlar bulundu:\n${matchedLines.join('\n')}`
+        `Hibrit yerel arama motoru belgelerinizde ilgili pasajları buldu:\n${lines.join('\n')}`
       );
     } else {
       sections.push(
@@ -273,6 +261,7 @@ function buildLocalAnswer(
   return {
     text: sections.join('\n\n'),
     citations: Array.from(citations),
+    semanticHits,
   };
 }
 
@@ -381,7 +370,8 @@ export const AssistantView: React.FC<AssistantViewProps> = ({
             role: 'assistant',
             text: result.text,
             citations: result.citations,
-            modeLabel: 'Yerel Çevrimdışı Motor',
+            semanticHits: result.semanticHits,
+            modeLabel: 'Hibrit Yerel Motor (BM25 + Vektör)',
             timestamp: new Date().toLocaleTimeString('tr-TR', {
               hour: '2-digit',
               minute: '2-digit',
@@ -762,23 +752,45 @@ export const AssistantView: React.FC<AssistantViewProps> = ({
                   {renderRichText(msg.text)}
                 </div>
 
-                {msg.citations && msg.citations.length > 0 && (
-                  <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-tertip-border/60 pt-2">
+                {msg.semanticHits && msg.semanticHits.length > 0 && (
+                  <div className="mt-3 space-y-1.5 border-t border-tertip-border/60 pt-2.5">
                     <span className="text-[11px] font-medium text-tertip-ink-muted">
-                      Kaynaklar:
+                      Anlamsal Belge Eşleşmeleri:
                     </span>
-                    {msg.citations.map((src) => (
-                      <Badge
-                        key={src}
-                        variant="neutral"
-                        size="sm"
-                        icon={<FileText className="h-3 w-3" />}
-                      >
-                        {src}
-                      </Badge>
-                    ))}
+                    <div className="flex flex-wrap gap-1.5">
+                      {msg.semanticHits.map((hit) => (
+                        <Badge
+                          key={`${hit.docId}-${hit.location}`}
+                          variant={hit.score >= 70 ? 'accent' : 'gold'}
+                          size="sm"
+                          icon={<FileText className="h-3 w-3" />}
+                        >
+                          {hit.docName} · %{hit.score}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 )}
+
+                {(!msg.semanticHits || msg.semanticHits.length === 0) &&
+                  msg.citations &&
+                  msg.citations.length > 0 && (
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-tertip-border/60 pt-2">
+                      <span className="text-[11px] font-medium text-tertip-ink-muted">
+                        Kaynaklar:
+                      </span>
+                      {msg.citations.map((src) => (
+                        <Badge
+                          key={src}
+                          variant="neutral"
+                          size="sm"
+                          icon={<FileText className="h-3 w-3" />}
+                        >
+                          {src}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
 
                 <div
                   className={`mt-1.5 flex items-center justify-between gap-3 text-[10px] ${
