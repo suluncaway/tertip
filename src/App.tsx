@@ -35,7 +35,16 @@ export function App() {
     createEmptyWorkspaceState('Tertip Çalışma Alanı', 'İşletme & Operasyon')
   );
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches
+    ) {
+      return 'dark';
+    }
+    return 'light';
+  });
   const [ingestProgress, setIngestProgress] = useState<IngestProgress | null>(
     null
   );

@@ -209,8 +209,43 @@ export const AppShell: React.FC<AppShellProps> = ({
         </ul>
       </nav>
 
-      {/* Reassuring Local-Only Footer Assurance */}
-      <div className="p-3 border-t border-[var(--tertip-border)] shrink-0">
+      {/* Theme Switcher + Reassuring Local-Only Footer Assurance */}
+      <div className="p-3 border-t border-[var(--tertip-border)] shrink-0 space-y-2.5">
+        <div
+          role="group"
+          aria-label="Tema seçimi"
+          className="grid grid-cols-2 gap-1 rounded-[var(--tertip-radius-sm)] border border-[var(--tertip-border)] bg-[var(--tertip-surface-subtle)] p-1"
+        >
+          <button
+            type="button"
+            onClick={() => theme === 'dark' && onToggleTheme()}
+            aria-pressed={theme === 'light'}
+            className={[
+              'inline-flex items-center justify-center gap-1.5 rounded-[var(--tertip-radius-xs)] px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer',
+              theme === 'light'
+                ? 'bg-[var(--tertip-surface)] text-[var(--tertip-ink)] shadow-[var(--tertip-shadow-xs)]'
+                : 'text-[var(--tertip-ink-muted)] hover:text-[var(--tertip-ink)]',
+            ].join(' ')}
+          >
+            <Sun className="h-3.5 w-3.5 text-[var(--tertip-gold)]" aria-hidden="true" />
+            <span>Açık</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => theme === 'light' && onToggleTheme()}
+            aria-pressed={theme === 'dark'}
+            className={[
+              'inline-flex items-center justify-center gap-1.5 rounded-[var(--tertip-radius-xs)] px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer',
+              theme === 'dark'
+                ? 'bg-[var(--tertip-surface)] text-[var(--tertip-ink)] shadow-[var(--tertip-shadow-xs)]'
+                : 'text-[var(--tertip-ink-muted)] hover:text-[var(--tertip-ink)]',
+            ].join(' ')}
+          >
+            <Moon className="h-3.5 w-3.5 text-[var(--tertip-accent)]" aria-hidden="true" />
+            <span>Koyu</span>
+          </button>
+        </div>
+
         <button
           type="button"
           onClick={() => handleNavSelect('privacy')}
@@ -334,13 +369,20 @@ export const AppShell: React.FC<AppShellProps> = ({
                 type="button"
                 onClick={onToggleTheme}
                 aria-label={theme === 'dark' ? 'Açık temaya geç' : 'Koyu temaya geç'}
+                aria-pressed={theme === 'dark'}
                 title={theme === 'dark' ? 'Açık temaya geç' : 'Koyu temaya geç'}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--tertip-radius-xs)] border border-[var(--tertip-border)] bg-[var(--tertip-surface)] text-[var(--tertip-ink-secondary)] hover:bg-[var(--tertip-surface-subtle)] hover:text-[var(--tertip-ink)] transition-colors cursor-pointer"
+                className="inline-flex h-8 items-center gap-1.5 rounded-[var(--tertip-radius-full)] border border-[var(--tertip-border)] bg-[var(--tertip-surface-elevated)] px-2.5 text-xs font-medium text-[var(--tertip-ink-secondary)] hover:bg-[var(--tertip-surface-subtle)] hover:text-[var(--tertip-ink)] transition-colors cursor-pointer"
               >
                 {theme === 'dark' ? (
-                  <Sun className="h-4 w-4" aria-hidden="true" />
+                  <>
+                    <Sun className="h-3.5 w-3.5 text-[var(--tertip-gold)]" aria-hidden="true" />
+                    <span className="hidden sm:inline">Açık</span>
+                  </>
                 ) : (
-                  <Moon className="h-4 w-4" aria-hidden="true" />
+                  <>
+                    <Moon className="h-3.5 w-3.5 text-[var(--tertip-accent)]" aria-hidden="true" />
+                    <span className="hidden sm:inline">Koyu</span>
+                  </>
                 )}
               </button>
             </div>
