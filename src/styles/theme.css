@@ -1,0 +1,218 @@
+/* ==========================================================================
+   TERTİP — OFFICIAL TOKENIZED DESIGN SYSTEM
+   --------------------------------------------------------------------------
+   Resmî Marka Renk Paleti:
+   - #F5EFE3  Warm Ivory / Cream       (Ana tuval arka planı)
+   - #4F5B2A  Deep Olive Green         (Birincil marka vurgusu, CTA, aktif durum)
+   - #B8892D  Burnished Ochre / Gold   (İkincil marka vurgusu, KPI & kâr vurgusu)
+   - #D8C9A8  Warm Sand / Champagne    (Kenarlıklar, ince yüzeyler, ayırıcılar)
+
+   Tek Dosyada Marka Özelleştirme:
+   Renk paletinizi veya yazı tiplerinizi değiştirmek için yalnızca bu
+   dosyadaki :root (açık tema) ve [data-theme="dark"] (koyu tema) içindeki
+   CSS değişkenlerini düzenlemeniz yeterlidir.
+   ========================================================================== */
+
+:root {
+  /* ---- Native browser UI color scheme (adapts scrollbars & form controls) ---- */
+  color-scheme: light dark;
+
+  /* ---- Typography (Swap these font stacks to apply your brand fonts) ---- */
+  --tertip-font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --tertip-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --tertip-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* ---- Light Mode Surfaces & Borders (Warm Ivory + Elevated Warm White + Sand) ---- */
+  --tertip-bg: #f5efe3;
+  --tertip-surface: #fcf9f2;
+  --tertip-surface-elevated: #f8f3e8;
+  --tertip-surface-subtle: #ede4d2;
+  --tertip-border: #d8c9a8;
+  --tertip-border-strong: #c2b089;
+
+  /* ---- Light Mode Typography Ink (Deep Olive-Charcoal, WCAG AA/AAA) ---- */
+  --tertip-ink: #1f2414;
+  --tertip-ink-secondary: #41492f;
+  --tertip-ink-muted: #62694f;
+
+  /* ---- Light Mode Primary Brand Accent (Deep Olive Green #4F5B2A) ---- */
+  --tertip-accent: #4f5b2a;
+  --tertip-accent-hover: #3e4820;
+  --tertip-accent-ink: #fcf9f2;
+  --tertip-accent-soft: rgba(79, 91, 42, 0.11);
+  --tertip-accent-border: rgba(79, 91, 42, 0.3);
+
+  /* ---- Light Mode Secondary Brand Accent (Burnished Ochre / Gold #B8892D) ---- */
+  --tertip-gold: #b8892d;
+  --tertip-gold-soft: rgba(184, 137, 45, 0.13);
+  --tertip-gold-border: rgba(184, 137, 45, 0.34);
+  --tertip-sand: #d8c9a8;
+
+  /* ---- Semantic Status Tokens (Harmonized with Editorial Olive & Ochre) ---- */
+  --tertip-success: #3b6b35;
+  --tertip-success-soft: rgba(59, 107, 53, 0.11);
+  --tertip-success-border: rgba(59, 107, 53, 0.28);
+
+  --tertip-warning: #a3741c;
+  --tertip-warning-soft: rgba(184, 137, 45, 0.14);
+  --tertip-warning-border: rgba(184, 137, 45, 0.35);
+
+  --tertip-danger: #a63d32;
+  --tertip-danger-soft: rgba(166, 61, 50, 0.1);
+  --tertip-danger-border: rgba(166, 61, 50, 0.28);
+
+  --tertip-info: #2d6278;
+  --tertip-info-soft: rgba(45, 98, 120, 0.1);
+  --tertip-info-border: rgba(45, 98, 120, 0.28);
+
+  /* ---- Chart Palette Tokens (Used by Analytics & Recharts) ---- */
+  --tertip-chart-1: #4f5b2a;
+  --tertip-chart-2: #b8892d;
+  --tertip-chart-3: #8c734b;
+  --tertip-chart-4: #3a6b5c;
+  --tertip-chart-5: #a64b3c;
+
+  /* ---- Radii ---- */
+  --tertip-radius-xs: 6px;
+  --tertip-radius-sm: 10px;
+  --tertip-radius-md: 14px;
+  --tertip-radius-lg: 20px;
+  --tertip-radius-xl: 26px;
+  --tertip-radius-full: 9999px;
+
+  /* ---- Elevation & Shadows ---- */
+  --tertip-shadow-xs: 0 1px 2px rgba(31, 36, 20, 0.05);
+  --tertip-shadow-sm: 0 1px 3px rgba(31, 36, 20, 0.07), 0 1px 2px rgba(31, 36, 20, 0.04);
+  --tertip-shadow-md: 0 8px 20px -4px rgba(31, 36, 20, 0.09), 0 2px 6px -2px rgba(31, 36, 20, 0.05);
+  --tertip-shadow-lg: 0 22px 48px -12px rgba(31, 36, 20, 0.18), 0 6px 16px -6px rgba(31, 36, 20, 0.08);
+  --tertip-shadow-focus: 0 0 0 3px rgba(79, 91, 42, 0.28);
+
+  /* ---- Backdrop & Scrollbars ---- */
+  --tertip-backdrop: rgba(21, 24, 16, 0.48);
+  --tertip-scrollbar-track: #ede4d2;
+  --tertip-scrollbar-thumb: #bda982;
+
+  /* ---- Motion ---- */
+  --tertip-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tertip-duration-fast: 140ms;
+  --tertip-duration-base: 220ms;
+}
+
+/* Explicit Light Mode Override */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+/* Explicit Dark Mode Override (Deep Olive-Charcoal + Luminous Olive & Gold) */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* ---- Dark Mode Surfaces & Borders ---- */
+  --tertip-bg: #151810;
+  --tertip-surface: #1d2117;
+  --tertip-surface-elevated: #24291c;
+  --tertip-surface-subtle: #2b3122;
+  --tertip-border: #363e2b;
+  --tertip-border-strong: #4a543b;
+
+  /* ---- Dark Mode Typography Ink ---- */
+  --tertip-ink: #f5efe3;
+  --tertip-ink-secondary: #d8c9a8;
+  --tertip-ink-muted: #a49f8d;
+
+  /* ---- Dark Mode Brand Accents (Luminous Olive #95A85C & Gold #B8892D/#D4A446) ---- */
+  --tertip-accent: #95a85c;
+  --tertip-accent-hover: #a8bc6f;
+  --tertip-accent-ink: #151810;
+  --tertip-accent-soft: rgba(149, 168, 92, 0.16);
+  --tertip-accent-border: rgba(149, 168, 92, 0.34);
+
+  --tertip-gold: #d4a446;
+  --tertip-gold-soft: rgba(184, 137, 45, 0.18);
+  --tertip-gold-border: rgba(212, 164, 70, 0.38);
+  --tertip-sand: #d8c9a8;
+
+  /* ---- Dark Mode Semantic Status Tokens ---- */
+  --tertip-success: #8cc072;
+  --tertip-success-soft: rgba(140, 192, 114, 0.15);
+  --tertip-success-border: rgba(140, 192, 114, 0.32);
+
+  --tertip-warning: #e0b354;
+  --tertip-warning-soft: rgba(224, 179, 84, 0.16);
+  --tertip-warning-border: rgba(224, 179, 84, 0.34);
+
+  --tertip-danger: #e47d70;
+  --tertip-danger-soft: rgba(228, 125, 112, 0.16);
+  --tertip-danger-border: rgba(228, 125, 112, 0.34);
+
+  --tertip-info: #7ab8d1;
+  --tertip-info-soft: rgba(122, 184, 209, 0.15);
+  --tertip-info-border: rgba(122, 184, 209, 0.32);
+
+  /* ---- Dark Mode Chart Palette ---- */
+  --tertip-chart-1: #95a85c;
+  --tertip-chart-2: #d4a446;
+  --tertip-chart-3: #d8c9a8;
+  --tertip-chart-4: #6bb09b;
+  --tertip-chart-5: #e07a68;
+
+  /* ---- Dark Mode Elevation & Shadows ---- */
+  --tertip-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.32);
+  --tertip-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.38);
+  --tertip-shadow-md: 0 10px 24px -6px rgba(0, 0, 0, 0.52);
+  --tertip-shadow-lg: 0 24px 56px -14px rgba(0, 0, 0, 0.72);
+  --tertip-shadow-focus: 0 0 0 3px rgba(149, 168, 92, 0.34);
+
+  --tertip-backdrop: rgba(8, 10, 6, 0.74);
+  --tertip-scrollbar-track: #1d2117;
+  --tertip-scrollbar-thumb: #464f38;
+}
+
+/* Respect OS Dark Preference when no explicit data-theme="light" is pinned */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --tertip-bg: #151810;
+    --tertip-surface: #1d2117;
+    --tertip-surface-elevated: #24291c;
+    --tertip-surface-subtle: #2b3122;
+    --tertip-border: #363e2b;
+    --tertip-border-strong: #4a543b;
+    --tertip-ink: #f5efe3;
+    --tertip-ink-secondary: #d8c9a8;
+    --tertip-ink-muted: #a49f8d;
+    --tertip-accent: #95a85c;
+    --tertip-accent-hover: #a8bc6f;
+    --tertip-accent-ink: #151810;
+    --tertip-accent-soft: rgba(149, 168, 92, 0.16);
+    --tertip-accent-border: rgba(149, 168, 92, 0.34);
+    --tertip-gold: #d4a446;
+    --tertip-gold-soft: rgba(184, 137, 45, 0.18);
+    --tertip-gold-border: rgba(212, 164, 70, 0.38);
+    --tertip-sand: #d8c9a8;
+    --tertip-success: #8cc072;
+    --tertip-success-soft: rgba(140, 192, 114, 0.15);
+    --tertip-success-border: rgba(140, 192, 114, 0.32);
+    --tertip-warning: #e0b354;
+    --tertip-warning-soft: rgba(224, 179, 84, 0.16);
+    --tertip-warning-border: rgba(224, 179, 84, 0.34);
+    --tertip-danger: #e47d70;
+    --tertip-danger-soft: rgba(228, 125, 112, 0.16);
+    --tertip-danger-border: rgba(228, 125, 112, 0.34);
+    --tertip-info: #7ab8d1;
+    --tertip-info-soft: rgba(122, 184, 209, 0.15);
+    --tertip-info-border: rgba(122, 184, 209, 0.32);
+    --tertip-chart-1: #95a85c;
+    --tertip-chart-2: #d4a446;
+    --tertip-chart-3: #d8c9a8;
+    --tertip-chart-4: #6bb09b;
+    --tertip-chart-5: #e07a68;
+    --tertip-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.32);
+    --tertip-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.38);
+    --tertip-shadow-md: 0 10px 24px -6px rgba(0, 0, 0, 0.52);
+    --tertip-shadow-lg: 0 24px 56px -14px rgba(0, 0, 0, 0.72);
+    --tertip-shadow-focus: 0 0 0 3px rgba(149, 168, 92, 0.34);
+    --tertip-backdrop: rgba(8, 10, 6, 0.74);
+    --tertip-scrollbar-track: #1d2117;
+    --tertip-scrollbar-thumb: #464f38;
+  }
+}

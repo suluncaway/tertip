@@ -1,1 +1,202 @@
 @import "tailwindcss";
+@import "./styles/theme.css";
+
+/* Expose Tertip tokens as Tailwind v4 utility colors & fonts */
+@theme inline {
+  --color-tertip-bg: var(--tertip-bg);
+  --color-tertip-surface: var(--tertip-surface);
+  --color-tertip-elevated: var(--tertip-surface-elevated);
+  --color-tertip-surface-elevated: var(--tertip-surface-elevated);
+  --color-tertip-subtle: var(--tertip-surface-subtle);
+  --color-tertip-surface-subtle: var(--tertip-surface-subtle);
+  --color-tertip-border: var(--tertip-border);
+  --color-tertip-border-strong: var(--tertip-border-strong);
+  --color-tertip-backdrop: var(--tertip-backdrop);
+  --color-tertip-ink: var(--tertip-ink);
+  --color-tertip-ink-secondary: var(--tertip-ink-secondary);
+  --color-tertip-ink-muted: var(--tertip-ink-muted);
+  --color-tertip-accent: var(--tertip-accent);
+  --color-tertip-accent-hover: var(--tertip-accent-hover);
+  --color-tertip-accent-ink: var(--tertip-accent-ink);
+  --color-tertip-accent-soft: var(--tertip-accent-soft);
+  --color-tertip-accent-border: var(--tertip-accent-border);
+  --color-tertip-gold: var(--tertip-gold);
+  --color-tertip-gold-soft: var(--tertip-gold-soft);
+  --color-tertip-gold-border: var(--tertip-gold-border);
+  --color-tertip-sand: var(--tertip-sand);
+  --color-tertip-success: var(--tertip-success);
+  --color-tertip-success-soft: var(--tertip-success-soft);
+  --color-tertip-success-border: var(--tertip-success-border);
+  --color-tertip-warning: var(--tertip-warning);
+  --color-tertip-warning-soft: var(--tertip-warning-soft);
+  --color-tertip-warning-border: var(--tertip-warning-border);
+  --color-tertip-danger: var(--tertip-danger);
+  --color-tertip-danger-soft: var(--tertip-danger-soft);
+  --color-tertip-danger-border: var(--tertip-danger-border);
+  --color-tertip-info: var(--tertip-info);
+  --color-tertip-info-soft: var(--tertip-info-soft);
+  --color-tertip-info-border: var(--tertip-info-border);
+  --font-display: var(--tertip-font-display);
+  --font-sans: var(--tertip-font-sans);
+  --font-mono: var(--tertip-font-mono);
+}
+
+@layer base {
+  html {
+    background-color: var(--tertip-bg);
+    color: var(--tertip-ink);
+    font-family: var(--tertip-font-sans);
+    accent-color: var(--tertip-accent);
+    scrollbar-color: var(--tertip-scrollbar-thumb) var(--tertip-scrollbar-track);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background-color: var(--tertip-bg);
+    color: var(--tertip-ink);
+    font-family: var(--tertip-font-sans);
+    line-height: 1.55;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--tertip-font-display);
+    letter-spacing: -0.02em;
+    color: var(--tertip-ink);
+  }
+
+  code,
+  pre,
+  kbd {
+    font-family: var(--tertip-font-mono);
+  }
+
+  ::selection {
+    background-color: var(--tertip-accent-soft);
+    color: var(--tertip-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--tertip-accent);
+    outline-offset: 2px;
+  }
+}
+
+/* Legacy scrollbar fallback for browsers without scrollbar-color */
+@supports not (scrollbar-color: auto) {
+  html {
+    scrollbar-width: auto;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--tertip-scrollbar-track);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--tertip-scrollbar-thumb);
+    border-radius: 9999px;
+    border: 2px solid var(--tertip-scrollbar-track);
+  }
+}
+
+/* Accessible visually-hidden utility (focusable elements like skip links opt out) */
+.visually-hidden:where(:not(:focus-within, :active)) {
+  position: absolute !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Native <dialog> modal styling & scroll containment (modern-web-guidance) */
+dialog.tertip-modal {
+  padding: 0;
+  border: 1px solid var(--tertip-border);
+  border-radius: var(--tertip-radius-lg);
+  background-color: var(--tertip-surface);
+  color: var(--tertip-ink);
+  box-shadow: var(--tertip-shadow-lg);
+  max-height: min(88dvh, 860px);
+  max-width: calc(100vw - 2rem);
+  margin: auto;
+  overflow: hidden;
+}
+
+dialog.tertip-modal[open] {
+  display: flex;
+  flex-direction: column;
+  animation: tertip-modal-in var(--tertip-duration-base) var(--tertip-ease) both;
+}
+
+dialog.tertip-modal:modal {
+  overscroll-behavior: contain;
+}
+
+dialog.tertip-modal::backdrop {
+  background-color: var(--tertip-backdrop);
+  backdrop-filter: blur(4px);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+@keyframes tertip-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes tertip-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+@keyframes tertip-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tertip-fade-up {
+  animation: tertip-fade-up 240ms var(--tertip-ease) both;
+}
+
+.tertip-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,7 @@
+# Tertip — robots.txt
+# GitHub Pages veya özel alan adınızı yayına alırken Sitemap adresini güncelleyin.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://tertip.github.io/sitemap.xml

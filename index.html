@@ -3,9 +3,107 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tertip — Yerel İş Planlama, Belge Analizi ve Raporlama</title>
+
+    <!-- Primary SEO Metadata (Turkish & Bilingual) -->
+    <title>Tertip — %100 Yerel İş Planlama, Belge Analizi, OCR ve Operasyon Raporlama</title>
+    <meta
+      name="description"
+      content="Tertip; Excel, CSV, PDF, PowerPoint ve taranmış belgelerinizi tamamen tarayıcı belleğinde (RAM) işleyen, sıfır sunuculu, şifreli yerel yedeklemeli iş operasyonları ve belge analizi platformudur. 100% local, zero-server, privacy-first business operations & document intelligence web app."
+    />
+    <meta
+      name="keywords"
+      content="tertip, yerel belge analizi, sunucusuz raporlama, gizlilik odaklı iş planlama, tarayıcı içi OCR, excel pdf pptx analiz, hastane operasyon takibi, KVKK uyumlu yerel analiz, zero-server document intelligence, client-side analytics, local OCR, encrypted vault"
+    />
+    <meta name="author" content="Tertip Contributors" />
+    <meta name="application-name" content="Tertip" />
+    <meta name="robots" content="index, follow" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#F5EFE3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#151810" media="(prefers-color-scheme: dark)" />
+
+    <!-- Canonical URL (GitHub Pages veya özel alan adınızı yayına alırken güncelleyin) -->
+    <link rel="canonical" href="https://tertip.github.io/" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="tr_TR" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:site_name" content="Tertip" />
+    <meta
+      property="og:title"
+      content="Tertip — %100 Yerel İş Planlama, Belge Analizi ve Operasyon Raporlama"
+    />
+    <meta
+      property="og:description"
+      content="Sunucusuz, uzak veritabanı olmadan çalışan gizlilik odaklı iş operasyonları ve belge zekâsı platformu. Excel, CSV, PDF, PPTX ve Türkçe/İngilizce OCR tamamen cihazınızda."
+    />
+    <meta property="og:url" content="https://tertip.github.io/" />
+
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="Tertip — %100 Yerel Belge Analizi & Operasyon Platformu"
+    />
+    <meta
+      name="twitter:description"
+      content="100% local, zero-server business operations & document intelligence. Parse Excel, CSV, PDF, PPTX & OCR entirely in RAM with AES-GCM encrypted .tertip backups."
+    />
+
+    <!--
+      =========================================================================
+      ÖZEL FONT ENTEGRASYONU / CUSTOM FONTS HOOK
+      =========================================================================
+      Tertip, varsayılan olarak gizlilik gereği hiçbir dış sunucuya istek atmaz
+      ve yüksek kaliteli sistem fontlarını kullanır. Kendi Google Fonts veya
+      yerel (@font-face) fontlarınızı eklemek isterseniz:
+
+      1) Google Fonts kullanmak için aşağıdaki 3 satırın yorumunu kaldırın:
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+      2) Ardından src/styles/theme.css dosyasındaki --tertip-font-display,
+         --tertip-font-sans ve --tertip-font-mono değişkenlerini güncelleyin.
+      =========================================================================
+    -->
+
+    <!-- Structured Data (JSON-LD SoftwareApplication) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Tertip",
+        "alternateName": "Tertip — Local Business Operations & Document Intelligence",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web Browser (Windows, macOS, Linux)",
+        "inLanguage": ["tr", "en"],
+        "isAccessibleForFree": true,
+        "license": "https://opensource.org/licenses/MIT",
+        "description": "Tertip is a free, open-source, 100% client-side, zero-server, privacy-first business operations and document intelligence platform. Parse Excel, CSV, PDF, PowerPoint, and scanned images (OCR) entirely in browser RAM with AES-GCM encrypted local vault backups.",
+        "featureList": [
+          "100% client-side execution in browser RAM with zero remote servers",
+          "Excel (.xlsx, .xls), CSV, PDF, PowerPoint (.pptx), and Turkish/English Image OCR parsing",
+          "Automated KPI extraction, financial & operational dashboards",
+          "Asset, facility, maintenance, and regulatory deadline tracking",
+          "Offline local Q&A assistant with optional Ollama or BYOK Gemini support",
+          "Password-protected PBKDF2 + AES-GCM encrypted .tertip local backup files"
+        ],
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
   </head>
   <body>
+    <noscript>
+      Tertip uygulamasını çalıştırmak için tarayıcınızda JavaScript desteğinin açık olması gerekir.
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

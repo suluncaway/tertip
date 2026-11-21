@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Tertip">
+  <defs>
+    <linearGradient id="tertip-bg" x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4F5B2A" />
+      <stop offset="100%" stop-color="#2F3818" />
+    </linearGradient>
+    <linearGradient id="tertip-gold" x1="14" y1="14" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#D8C9A8" />
+      <stop offset="55%" stop-color="#B8892D" />
+      <stop offset="100%" stop-color="#9A7020" />
+    </linearGradient>
+  </defs>
+
+  <!-- Deep Olive Green editorial emblem frame with Warm Sand hairline -->
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#tertip-bg)" />
+  <rect x="2.75" y="2.75" width="58.5" height="58.5" rx="14.25" stroke="#D8C9A8" stroke-opacity="0.45" stroke-width="1.5" />
+
+  <!-- Architectural "T" top beam in Burnished Ochre / Gold -->
+  <rect x="14" y="15" width="36" height="7" rx="3.5" fill="url(#tertip-gold)" />
+
+  <!-- Central vertical stem in Warm Ivory -->
+  <rect x="28.5" y="26" width="7" height="23" rx="3.5" fill="#F5EFE3" />
+
+  <!-- Ascending analytics / order pillars flanking the stem -->
+  <rect x="15" y="36" width="8" height="13" rx="3" fill="#D8C9A8" fill-opacity="0.72" />
+  <rect x="41" y="29" width="8" height="20" rx="3" fill="#B8892D" />
+</svg>
