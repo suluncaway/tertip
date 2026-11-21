@@ -30,3 +30,12 @@ export type { AuditReadinessGaugeProps, AuditMissingItem } from './AuditReadines
 
 export { SectorPackPicker } from './SectorPackPicker';
 export type { SectorPackPickerProps, SectorPackOption } from './SectorPackPicker';
+
+export { DeltaStoryCard } from './DeltaStoryCard';
+export type { DeltaStoryCardProps, DeltaMetricChip } from './DeltaStoryCard';
+
+export { WaterfallChart } from './WaterfallChart';
+export type { WaterfallChartProps, WaterfallStep } from './WaterfallChart';
+
+export { CapsuleSealBadge, formatShortFingerprint } from './CapsuleSealBadge';
+export type { CapsuleSealBadgeProps, CapsuleSealStatus } from './CapsuleSealBadge';

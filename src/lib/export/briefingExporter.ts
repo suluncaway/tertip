@@ -1,10 +1,12 @@
 import type { ChartSeriesPoint, WorkspaceState } from '../../types';
 import { computeAuditReadiness } from '../analytics/auditReadiness';
 import { runCrossDocumentAudit } from '../analytics/crossDocAudit';
+import { comparePeriods } from '../analytics/periodDelta';
 import { anonymizeWorkspace } from '../privacy/kvkkShield';
 
 export interface BriefingExportOptions {
   anonymizeKvkk: boolean;
+  includeDelta?: boolean;
 }
 
 function escapeHtml(text: string): string {
@@ -88,6 +90,7 @@ export function buildExecutiveBriefingHtml(
   const safeState = options.anonymizeKvkk ? anonymizeWorkspace(state) : state;
   const readiness = computeAuditReadiness(safeState);
   const audit = runCrossDocumentAudit(safeState);
+  const delta = options.includeDelta ? comparePeriods(safeState) : null;
 
   const totalRevenue = safeState.chartSeries.reduce((s, p) => s + (p.revenue ?? 0), 0);
   const totalProfit = safeState.chartSeries.reduce((s, p) => s + (p.profit ?? 0), 0);
@@ -206,6 +209,15 @@ export function buildExecutiveBriefingHtml(
       <h2>Dönemsel Gelir &amp; Net Kâr Trendi</h2>
       ${renderInlineTrendSvg(safeState.chartSeries)}
     </div>
+
+    ${
+      delta && !delta.insufficientData
+        ? `<div class="section">
+      <h2>Geçen Aya Göre Ne Değişti? (${escapeHtml(delta.previousPeriod)} → ${escapeHtml(delta.currentPeriod)})</h2>
+      ${delta.story.map((p) => `<p style="font-size:13.5px;line-height:1.6;margin:0 0 8px;">${escapeHtml(p)}</p>`).join('')}
+    </div>`
+        : ''
+    }
 
     <div class="section">
       <h2>Öncelikli Hatırlatıcılar ve Yaklaşan Süreçler (${openReminders.length})</h2>

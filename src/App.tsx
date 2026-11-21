@@ -11,6 +11,7 @@ import {
   createEmptyWorkspaceState,
   createHospitalDemoState,
   getSectorPackById,
+  importCollectionResponses,
   ingestFiles,
   mergeChartSeries,
 } from './lib';
@@ -149,6 +150,66 @@ export function App() {
   const handleGlobalUploadClick = useCallback(() => {
     globalFileInputRef.current?.click();
   }, []);
+
+  const handleImportCollectionResponses = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0) return;
+      try {
+        const result = await importCollectionResponses(files);
+
+        if (result.document) {
+          const importedDoc = result.document;
+          setWorkspace((prev) => {
+            const existingAssetNames = new Set(
+              prev.assets.map((a) => a.name.toLocaleLowerCase('tr-TR'))
+            );
+            const newAssets = result.assets.filter(
+              (a) => !existingAssetNames.has(a.name.toLocaleLowerCase('tr-TR'))
+            );
+
+            const existingReminderTitles = new Set(
+              prev.reminders.map((r) => r.title.toLocaleLowerCase('tr-TR'))
+            );
+            const newReminders = result.reminders.filter(
+              (r) =>
+                !existingReminderTitles.has(r.title.toLocaleLowerCase('tr-TR'))
+            );
+
+            return {
+              ...prev,
+              documents: [importedDoc, ...prev.documents],
+              metrics: [...result.metrics, ...prev.metrics],
+              chartSeries: mergeChartSeries(
+                prev.chartSeries,
+                result.chartSeries
+              ),
+              assets: [...newAssets, ...prev.assets],
+              reminders: [...newReminders, ...prev.reminders],
+            };
+          });
+        }
+
+        if (result.errors.length > 0 && result.acceptedCount === 0) {
+          showToast(`Hata: ${result.errors[0]}`);
+        } else if (result.errors.length > 0) {
+          showToast(
+            `${result.acceptedCount} form yanıtı eklendi (${result.errors.length} geçersiz dosya atlandı: ${result.errors[0]}).`
+          );
+        } else {
+          showToast(
+            `${result.acceptedCount} şube/ekip form yanıtı içe aktarıldı (${result.reminders.length} hatırlatıcı, ${result.assets.length} varlık).`
+          );
+        }
+      } catch (err) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Form yanıtları içe aktarılırken hata oluştu.';
+        showToast(`Hata: ${msg}`);
+      }
+    },
+    [showToast]
+  );
 
   // Global window drag-and-drop support
   useEffect(() => {
@@ -339,6 +400,9 @@ export function App() {
             documents={workspace.documents}
             ingestProgress={ingestProgress}
             onIngestFiles={(files) => void handleIngestFiles(files)}
+            onImportCollectionResponses={(files) =>
+              void handleImportCollectionResponses(files)
+            }
             onDeleteDocument={handleDeleteDocument}
             onLoadDemo={handleLoadDemo}
           />

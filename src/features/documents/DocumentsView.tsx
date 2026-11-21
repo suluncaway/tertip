@@ -4,7 +4,9 @@ import {
   Camera,
   ChevronDown,
   ChevronUp,
+  ClipboardList,
   Database,
+  Download,
   Eye,
   FileImage,
   FileSpreadsheet,
@@ -17,6 +19,7 @@ import {
   Table2,
   Terminal,
   Trash2,
+  Upload,
   UploadCloud,
 } from 'lucide-react';
 import {
@@ -29,6 +32,8 @@ import {
   SectionHeader,
 } from '../../components/ui';
 import {
+  FORM_TEMPLATES,
+  downloadCollectionForm,
   enhanceDocumentImage,
   extractTurkishInvoiceSutFields,
   runCrossDocumentAudit,
@@ -42,6 +47,7 @@ export interface DocumentsViewProps {
   documents: TertipDocument[];
   ingestProgress: IngestProgress | null;
   onIngestFiles: (files: File[]) => void;
+  onImportCollectionResponses: (files: File[]) => void;
   onDeleteDocument: (docId: string) => void;
   onLoadDemo: () => void;
 }
@@ -112,14 +118,20 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
   documents,
   ingestProgress,
   onIngestFiles,
+  onImportCollectionResponses,
   onDeleteDocument,
   onLoadDemo,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const collectionImportRef = useRef<HTMLInputElement>(null);
 
   const [isDragging, setIsDragging] = useState(false);
   const [cameraBusy, setCameraBusy] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
+    FORM_TEMPLATES[0]?.id ?? 'aylik-sube-raporu'
+  );
+  const [branchHint, setBranchHint] = useState('');
   const [search, setSearch] = useState('');
   const [kindFilter, setKindFilter] = useState<'all' | DocumentKind>('all');
   const [previewDoc, setPreviewDoc] = useState<TertipDocument | null>(null);
@@ -365,6 +377,110 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
           />
         </Card>
       )}
+
+      {/* Ekip / Şube Veri Toplama (Sunucusuz Taşınabilir Formlar) */}
+      <Card
+        variant="default"
+        padding="md"
+        header={
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-tertip-accent" />
+              <div>
+                <h2 className="text-sm font-semibold text-tertip-ink">
+                  Ekip / Şube Veri Toplama
+                </h2>
+                <p className="text-[11px] text-tertip-ink-muted">
+                  İnternetsiz çalışan tek dosya HTML form gönderin; gelen{' '}
+                  <code className="font-mono">.tertip-form.json</code>{' '}
+                  yanıtlarını toplu içe aktarın
+                </p>
+              </div>
+            </div>
+            <Badge variant="accent" size="sm">
+              0 Sunucu · Çevrimdışı Form
+            </Badge>
+          </div>
+        }
+      >
+        <input
+          ref={collectionImportRef}
+          type="file"
+          multiple
+          accept=".json,.tertip-form.json,application/json"
+          className="hidden"
+          onChange={(e) => {
+            const files = e.target.files ? Array.from(e.target.files) : [];
+            if (files.length > 0) {
+              onImportCollectionResponses(files);
+            }
+            e.target.value = '';
+          }}
+        />
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-end">
+          <div className="md:col-span-5">
+            <label className="mb-1 block text-xs font-medium text-tertip-ink">
+              Form Şablonu
+            </label>
+            <select
+              value={selectedTemplateId}
+              onChange={(e) => setSelectedTemplateId(e.target.value)}
+              className="min-h-11 w-full rounded-xl border border-tertip-border bg-tertip-surface px-3 py-2 text-xs text-tertip-ink focus:border-tertip-accent focus:outline-none sm:min-h-0"
+            >
+              {FORM_TEMPLATES.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>
+                  {tpl.name} ({tpl.category})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="md:col-span-3">
+            <label className="mb-1 block text-xs font-medium text-tertip-ink">
+              Şube / Birim Adı (İsteğe Bağlı)
+            </label>
+            <input
+              type="text"
+              value={branchHint}
+              onChange={(e) => setBranchHint(e.target.value)}
+              placeholder="Örn: Kadıköy Şube"
+              className="min-h-11 w-full rounded-xl border border-tertip-border bg-tertip-surface px-3 py-2 text-xs text-tertip-ink focus:border-tertip-accent focus:outline-none sm:min-h-0"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:col-span-4">
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Download className="h-4 w-4" />}
+              onClick={() => {
+                const tpl =
+                  FORM_TEMPLATES.find((t) => t.id === selectedTemplateId) ??
+                  FORM_TEMPLATES[0];
+                if (tpl) {
+                  downloadCollectionForm(tpl, {
+                    workspaceName: workspace.workspaceName,
+                    branchHint: branchHint.trim() || undefined,
+                  });
+                }
+              }}
+              className="min-h-11 sm:min-h-0"
+            >
+              Formu İndir
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Upload className="h-4 w-4" />}
+              onClick={() => collectionImportRef.current?.click()}
+              className="min-h-11 sm:min-h-0"
+            >
+              Yanıtları İçe Aktar
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       {/* Cross-Document Audit & Leakage Radar */}
       {documents.length > 0 && (

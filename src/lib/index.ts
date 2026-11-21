@@ -89,3 +89,41 @@ export {
   printExecutiveBriefing,
 } from './export/briefingExporter';
 export type { BriefingExportOptions } from './export/briefingExporter';
+
+export { comparePeriods, compareWorkspaces } from './analytics/periodDelta';
+export type {
+  ComparePeriodsOptions,
+  MetricDelta,
+  OperationalChangeSummary,
+  PeriodDeltaResult,
+  WaterfallStep,
+} from './analytics/periodDelta';
+
+export {
+  FORM_TEMPLATES,
+  buildCollectionFormHtml,
+  downloadCollectionForm,
+  importCollectionResponses,
+} from './forms/collectionForm';
+export type {
+  CollectionFormOptions,
+  CollectionFormResponsePayload,
+  CollectionImportResult,
+  FormField,
+  FormFieldType,
+  FormTemplate,
+} from './forms/collectionForm';
+
+export {
+  CAPSULE_HONESTY_NOTE,
+  buildAuditorCapsule,
+  downloadAuditorCapsule,
+  formatCapsuleFingerprint,
+  verifyAuditorCapsule,
+} from './storage/auditorCapsule';
+export type {
+  AuditorCapsuleOptions,
+  AuditorCapsuleResult,
+  CapsuleSection,
+  CapsuleVerificationResult,
+} from './storage/auditorCapsule';

@@ -10,7 +10,9 @@ import {
   Download,
   FileSpreadsheet,
   FolderOpen,
+  GitCompareArrows,
   Printer,
+  RotateCcw,
   ShieldCheck,
   Sparkles,
   TrendingUp,
@@ -39,18 +41,26 @@ import {
   Badge,
   Button,
   Card,
+  DeltaStoryCard,
   EmptyState,
+  Modal,
   MorningBriefingCard,
   SectionHeader,
   SectorPackPicker,
   StatCard,
+  WaterfallChart,
 } from '../../components/ui';
+import type { DeltaMetricChip } from '../../components/ui';
 import {
   SECTOR_PACKS,
+  comparePeriods,
+  compareWorkspaces,
   computeAuditReadiness,
   exportExecutiveBriefingHtml,
+  importEncryptedVaultFile,
   printExecutiveBriefing,
 } from '../../lib';
+import type { PeriodDeltaResult } from '../../lib';
 import type { NavTab, ReminderItem, WorkspaceState } from '../../types';
 
 export interface DashboardViewProps {
@@ -128,6 +138,91 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onToggleReminder,
 }) => {
   const [anonymizeBriefing, setAnonymizeBriefing] = useState(true);
+  const [includeDeltaInBriefing, setIncludeDeltaInBriefing] = useState(true);
+
+  // Compare with previous encrypted .tertip backup
+  const [compareModalOpen, setCompareModalOpen] = useState(false);
+  const [compareFile, setCompareFile] = useState<File | null>(null);
+  const [comparePassword, setComparePassword] = useState('');
+  const [compareBusy, setCompareBusy] = useState(false);
+  const [compareError, setCompareError] = useState<string | null>(null);
+  const [vaultDelta, setVaultDelta] = useState<{
+    result: PeriodDeltaResult;
+    sourceName: string;
+  } | null>(null);
+
+  const periodDelta = useMemo(() => comparePeriods(workspace), [workspace]);
+  const activeDelta = vaultDelta ? vaultDelta.result : periodDelta;
+
+  const deltaMetricChips = useMemo<DeltaMetricChip[]>(() => {
+    const formatMetricValue = (val: number, unit: string) => {
+      if (unit === '₺') return formatCurrencyCompact(val);
+      return `${formatNumber(Math.round(val))}${unit ? ` ${unit}` : ''}`;
+    };
+
+    return activeDelta.metrics.slice(0, 4).map((m) => {
+      const direction: 'up' | 'down' | 'flat' =
+        m.abs > 0 ? 'up' : m.abs < 0 ? 'down' : 'flat';
+      const sign = m.abs > 0 ? '+' : m.abs < 0 ? '-' : '';
+      const absFormatted =
+        m.unit === '₺'
+          ? `${sign}${formatCurrencyCompact(Math.abs(m.abs))}`
+          : `${sign}${formatNumber(Math.abs(Math.round(m.abs)))}`;
+
+      return {
+        id: m.key,
+        label: m.label,
+        currentFormatted: formatMetricValue(m.curr, m.unit),
+        previousFormatted: formatMetricValue(m.prev, m.unit),
+        deltaFormatted: absFormatted,
+        deltaPct: m.pct,
+        direction,
+        goodWhen: m.invertSentiment ? 'down' : 'up',
+      };
+    });
+  }, [activeDelta.metrics]);
+
+  const waterfallSteps = useMemo(
+    () =>
+      activeDelta.waterfall.map((step, idx) => ({
+        id: `wf_${idx}`,
+        label: step.label,
+        value: step.value,
+        kind: (step.kind === 'up' || step.kind === 'down'
+          ? 'delta'
+          : step.kind) as 'start' | 'delta' | 'end',
+      })),
+    [activeDelta.waterfall]
+  );
+
+  const handleCompareVault = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCompareError(null);
+    if (!compareFile || !comparePassword) {
+      setCompareError('Lütfen bir .tertip yedeği seçin ve parolasını girin.');
+      return;
+    }
+    setCompareBusy(true);
+    try {
+      const previousWorkspace = await importEncryptedVaultFile(
+        compareFile,
+        comparePassword
+      );
+      const result = compareWorkspaces(previousWorkspace, workspace);
+      setVaultDelta({ result, sourceName: compareFile.name });
+      setComparePassword('');
+      setCompareFile(null);
+      setCompareModalOpen(false);
+    } catch (err) {
+      setCompareError(
+        err instanceof Error
+          ? err.message
+          : 'Yedek çözülemedi. Parolanızı kontrol edin.'
+      );
+    } finally {
+      setCompareBusy(false);
+    }
+  };
 
   const isEmpty =
     workspace.documents.length === 0 &&
@@ -496,6 +591,70 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         />
       </div>
 
+      {/* Dönem Fark Hikâyesi + Kâr Köprüsü (Waterfall) */}
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+        <div className="xl:col-span-7">
+          <DeltaStoryCard
+            title="Geçen Aya Göre Ne Değişti?"
+            periodLabel={
+              vaultDelta
+                ? `Yedek (${vaultDelta.sourceName}) → Güncel`
+                : activeDelta.previousPeriod && activeDelta.currentPeriod
+                  ? `${activeDelta.previousPeriod} → ${activeDelta.currentPeriod}`
+                  : undefined
+            }
+            metrics={deltaMetricChips}
+            narratives={activeDelta.story}
+            insufficientData={activeDelta.insufficientData}
+            insufficientMessage={activeDelta.reason}
+            actions={
+              <div className="flex flex-wrap items-center gap-1.5">
+                {vaultDelta && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={<RotateCcw className="h-3.5 w-3.5" />}
+                    onClick={() => setVaultDelta(null)}
+                  >
+                    Dönemlere Dön
+                  </Button>
+                )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<GitCompareArrows className="h-3.5 w-3.5" />}
+                  onClick={() => setCompareModalOpen(true)}
+                >
+                  Eski .tertip Yedeğiyle Karşılaştır
+                </Button>
+              </div>
+            }
+          />
+        </div>
+
+        <div className="xl:col-span-5">
+          {!activeDelta.insufficientData && waterfallSteps.length >= 2 ? (
+            <WaterfallChart
+              steps={waterfallSteps}
+              title="Net Kâr Köprüsü"
+              subtitle="Hacim, fiyat ve maliyet etkilerinin net kâr değişimine katkısı"
+              valueFormatter={(val, signed) => {
+                const sign = signed && val > 0 ? '+' : '';
+                return `${sign}${formatCurrencyCompact(val)}`;
+              }}
+            />
+          ) : (
+            <Card variant="default" padding="md" className="h-full">
+              <EmptyState
+                compact
+                title="Kâr köprüsü için en az 2 dönem gerekir"
+                description="İki farklı döneme ait gelir/maliyet verisi yüklendiğinde veya eski bir .tertip yedeği seçildiğinde kâr köprüsü otomatik çizilir."
+              />
+            </Card>
+          )}
+        </div>
+      </div>
+
       {/* Audit Readiness Gauge + 1-Click Executive Briefing Export */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
         <div className="xl:col-span-7">
@@ -560,6 +719,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </label>
 
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-tertip-border bg-tertip-surface px-3 py-2.5 text-xs">
+              <input
+                type="checkbox"
+                checked={includeDeltaInBriefing}
+                onChange={(e) => setIncludeDeltaInBriefing(e.target.checked)}
+                className="h-4 w-4 shrink-0 accent-tertip-accent"
+              />
+              <span className="font-medium text-tertip-ink">
+                &quot;Geçen Aya Göre Ne Değişti?&quot; fark hikâyesini dahil et
+              </span>
+            </label>
+
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Button
                 variant="primary"
@@ -568,6 +739,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onClick={() =>
                   exportExecutiveBriefingHtml(workspace, {
                     anonymizeKvkk: anonymizeBriefing,
+                    includeDelta: includeDeltaInBriefing,
                   })
                 }
                 className="min-h-11"
@@ -581,6 +753,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onClick={() =>
                   printExecutiveBriefing(workspace, {
                     anonymizeKvkk: anonymizeBriefing,
+                    includeDelta: includeDeltaInBriefing,
                   })
                 }
                 className="min-h-11"
@@ -979,6 +1152,66 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           )}
         </Card>
       </div>
+
+      {/* Compare with Previous .tertip Vault Modal */}
+      <Modal
+        open={compareModalOpen}
+        onClose={() => {
+          setCompareModalOpen(false);
+          setCompareError(null);
+        }}
+        title="Eski .tertip Yedeğiyle Karşılaştır"
+        subtitle="Önceki döneme ait şifreli .tertip dosyanızı seçin; yalnızca RAM içinde çözülüp mevcut dönemle kıyaslanır."
+        size="sm"
+      >
+        <form onSubmit={handleCompareVault} className="space-y-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-tertip-ink">
+              Önceki .tertip Kasa Dosyası *
+            </label>
+            <input
+              type="file"
+              required
+              accept=".tertip,application/json"
+              onChange={(e) => setCompareFile(e.target.files?.[0] ?? null)}
+              className="w-full rounded-xl border border-tertip-border bg-tertip-surface px-3 py-2 text-xs text-tertip-ink file:mr-3 file:rounded-lg file:border-0 file:bg-tertip-accent-soft file:px-3 file:py-1 file:text-xs file:font-medium file:text-tertip-accent"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-tertip-ink">
+              Yedek Parolası *
+            </label>
+            <input
+              type="password"
+              required
+              value={comparePassword}
+              onChange={(e) => setComparePassword(e.target.value)}
+              placeholder="Şifreli kasa parolası..."
+              className="w-full rounded-xl border border-tertip-border bg-tertip-surface px-3 py-2 text-sm text-tertip-ink focus:border-tertip-accent focus:outline-none"
+            />
+          </div>
+
+          {compareError && (
+            <p className="rounded-xl border border-tertip-danger-border bg-tertip-danger-soft p-2.5 text-xs text-tertip-danger">
+              {compareError}
+            </p>
+          )}
+
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setCompareModalOpen(false)}
+            >
+              İptal
+            </Button>
+            <Button type="submit" variant="primary" loading={compareBusy}>
+              Karşılaştır
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

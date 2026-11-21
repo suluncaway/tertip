@@ -12,6 +12,7 @@ import {
   RefreshCw,
   ShieldAlert,
   ShieldCheck,
+  Stamp,
   Trash2,
   Upload,
   WifiOff,
@@ -19,20 +20,40 @@ import {
 import {
   Badge,
   Button,
+  CapsuleSealBadge,
   Card,
   Modal,
   SectionHeader,
 } from '../../components/ui';
 import {
+  CAPSULE_HONESTY_NOTE,
+  buildAuditorCapsule,
   collectZeroNetworkProof,
+  downloadAuditorCapsule,
   downloadKvkkProofReport,
   exportEncryptedVaultFile,
   exportExecutiveBriefingHtml,
   importEncryptedVaultFile,
   scanWorkspacePii,
+  verifyAuditorCapsule,
 } from '../../lib';
-import type { ZeroNetworkProof } from '../../lib';
+import type {
+  AuditorCapsuleResult,
+  CapsuleSection,
+  CapsuleVerificationResult,
+  ZeroNetworkProof,
+} from '../../lib';
 import type { WorkspaceState } from '../../types';
+
+const CAPSULE_SECTION_OPTIONS: { key: CapsuleSection; label: string }[] = [
+  { key: 'kpis', label: 'Özet KPI Göstergeleri' },
+  { key: 'chart', label: 'Dönemsel Performans Serisi' },
+  { key: 'delta', label: 'Geçen Aya Göre Fark Hikâyesi' },
+  { key: 'audit', label: 'Denetime Hazırlık & Çapraz Denetim' },
+  { key: 'reminders', label: 'Hatırlatıcılar & Takvim' },
+  { key: 'assets', label: 'Varlık & Cihaz Envanteri' },
+  { key: 'documents', label: 'Seçili Belge Özetleri' },
+];
 
 export interface PrivacyViewProps {
   workspace: WorkspaceState;
@@ -75,6 +96,94 @@ export const PrivacyView: React.FC<PrivacyViewProps> = ({
 
   // Clear confirmation modal
   const [clearModalOpen, setClearModalOpen] = useState(false);
+
+  // Auditor Capsule create state
+  const [capsuleSections, setCapsuleSections] = useState<CapsuleSection[]>([
+    'kpis',
+    'chart',
+    'delta',
+    'audit',
+    'reminders',
+    'assets',
+    'documents',
+  ]);
+  const [capsuleDocIds, setCapsuleDocIds] = useState<string[]>([]);
+  const [capsuleAnonymize, setCapsuleAnonymize] = useState(true);
+  const [capsuleAuditorName, setCapsuleAuditorName] = useState('');
+  const [capsuleNote, setCapsuleNote] = useState('');
+  const [capsulePassword, setCapsulePassword] = useState('');
+  const [capsuleBusy, setCapsuleBusy] = useState(false);
+  const [generatedCapsule, setGeneratedCapsule] =
+    useState<AuditorCapsuleResult | null>(null);
+  const [capsuleError, setCapsuleError] = useState<string | null>(null);
+
+  // Auditor Capsule verify state
+  const [verifyFile, setVerifyFile] = useState<File | null>(null);
+  const [verifyExpectedFp, setVerifyExpectedFp] = useState('');
+  const [verifyBusy, setVerifyBusy] = useState(false);
+  const [verifyResult, setVerifyResult] =
+    useState<CapsuleVerificationResult | null>(null);
+
+  const toggleCapsuleSection = (sec: CapsuleSection) => {
+    setCapsuleSections((prev) =>
+      prev.includes(sec) ? prev.filter((s) => s !== sec) : [...prev, sec]
+    );
+  };
+
+  const toggleCapsuleDoc = (docId: string) => {
+    setCapsuleDocIds((prev) =>
+      prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]
+    );
+  };
+
+  const handleBuildCapsule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCapsuleError(null);
+    if (capsuleSections.length === 0) {
+      setCapsuleError('Kapsül için en az bir bölüm seçmelisiniz.');
+      return;
+    }
+    setCapsuleBusy(true);
+    try {
+      const capsule = await buildAuditorCapsule(workspace, {
+        sections: capsuleSections,
+        documentIds:
+          capsuleSections.includes('documents') && capsuleDocIds.length > 0
+            ? capsuleDocIds
+            : undefined,
+        anonymizeKvkk: capsuleAnonymize,
+        auditorName: capsuleAuditorName.trim() || undefined,
+        note: capsuleNote.trim() || undefined,
+        password: capsulePassword.trim() || undefined,
+      });
+      setGeneratedCapsule(capsule);
+      downloadAuditorCapsule(capsule, workspace.workspaceName);
+      setCapsulePassword('');
+    } catch (err) {
+      setCapsuleError(
+        err instanceof Error
+          ? err.message
+          : 'Denetçi kapsülü oluşturulurken hata oluştu.'
+      );
+    } finally {
+      setCapsuleBusy(false);
+    }
+  };
+
+  const handleVerifyCapsule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!verifyFile) return;
+    setVerifyBusy(true);
+    try {
+      const result = await verifyAuditorCapsule(
+        verifyFile,
+        verifyExpectedFp.trim() || undefined
+      );
+      setVerifyResult(result);
+    } finally {
+      setVerifyBusy(false);
+    }
+  };
 
   const handleRefreshProof = () => {
     setNetworkProof(collectZeroNetworkProof());
@@ -407,6 +516,247 @@ export const PrivacyView: React.FC<PrivacyViewProps> = ({
           </div>
         </Card>
       </div>
+
+      {/* Denetçi Kapsülü (Salt Okunur Mühürlü Paylaşım & Doğrulama) */}
+      <Card
+        variant="elevated"
+        padding="md"
+        header={
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Stamp className="h-4 w-4 text-tertip-gold" />
+              <div>
+                <h2 className="text-sm font-semibold text-tertip-ink">
+                  Denetçi Kapsülü (Mühürlü Salt-Okunur Paket)
+                </h2>
+                <p className="text-[11px] text-tertip-ink-muted">
+                  Yalnızca seçili bölümleri içeren, SHA-256 parmak izli çevrimdışı HTML denetim paketi oluşturun veya doğrulayın
+                </p>
+              </div>
+            </div>
+            <Badge variant="gold" size="sm">
+              SHA-256 Mühür
+            </Badge>
+          </div>
+        }
+      >
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          {/* Create & Download Capsule */}
+          <form
+            onSubmit={handleBuildCapsule}
+            className="space-y-4 lg:col-span-7"
+          >
+            <div>
+              <p className="mb-2 text-xs font-semibold text-tertip-ink">
+                Kapsüle Dahil Edilecek Bölümler
+              </p>
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                {CAPSULE_SECTION_OPTIONS.map((opt) => (
+                  <label
+                    key={opt.key}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-tertip-border/70 bg-tertip-surface px-2.5 py-2 text-xs text-tertip-ink"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={capsuleSections.includes(opt.key)}
+                      onChange={() => toggleCapsuleSection(opt.key)}
+                      className="h-3.5 w-3.5 accent-tertip-accent"
+                    />
+                    <span>{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {capsuleSections.includes('documents') &&
+              workspace.documents.length > 0 && (
+                <div>
+                  <p className="mb-1.5 text-xs font-medium text-tertip-ink-muted">
+                    Belge Filtresi (Seçilmezse tüm belgeler eklenir)
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {workspace.documents.map((doc) => {
+                      const active = capsuleDocIds.includes(doc.id);
+                      return (
+                        <button
+                          key={doc.id}
+                          type="button"
+                          onClick={() => toggleCapsuleDoc(doc.id)}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                            active
+                              ? 'bg-tertip-accent text-tertip-accent-ink'
+                              : 'border border-tertip-border bg-tertip-surface text-tertip-ink-secondary'
+                          }`}
+                        >
+                          {doc.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-tertip-ink">
+                  Denetçi / Kurum Adı (İsteğe Bağlı)
+                </label>
+                <input
+                  type="text"
+                  value={capsuleAuditorName}
+                  onChange={(e) => setCapsuleAuditorName(e.target.value)}
+                  placeholder="Örn: İl Sağlık Denetim Ekibi"
+                  className="w-full rounded-xl border border-tertip-border bg-tertip-surface px-3 py-2 text-xs text-tertip-ink focus:border-tertip-accent focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-tertip-ink">
+                  Kapsül Parolası (İsteğe Bağlı AES-GCM)
+                </label>
+                <input
+                  type="password"
+                  value={capsulePassword}
+                  onChange={(e) => setCapsulePassword(e.target.value)}
+                  placeholder="Boş bırakılırsa şifresiz salt-okunur"
+                  className="w-full rounded-xl border border-tertip-border bg-tertip-surface px-3 py-2 text-xs text-tertip-ink focus:border-tertip-accent focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-tertip-ink">
+                Denetim Notu
+              </label>
+              <input
+                type="text"
+                value={capsuleNote}
+                onChange={(e) => setCapsuleNote(e.target.value)}
+                placeholder="Örn: 2026 2. Çeyrek ön inceleme paketi"
+                className="w-full rounded-xl border border-tertip-border bg-tertip-surface px-3 py-2 text-xs text-tertip-ink focus:border-tertip-accent focus:outline-none"
+              />
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-tertip-ink">
+              <input
+                type="checkbox"
+                checked={capsuleAnonymize}
+                onChange={(e) => setCapsuleAnonymize(e.target.checked)}
+                className="h-4 w-4 accent-tertip-accent"
+              />
+              KVKK Kalkanı ile kişisel verileri maskele (Varsayılan açık)
+            </label>
+
+            {capsuleError && (
+              <p className="rounded-xl border border-tertip-danger-border bg-tertip-danger-soft p-2.5 text-xs text-tertip-danger">
+                {capsuleError}
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              variant="primary"
+              fullWidth
+              loading={capsuleBusy}
+              icon={<Download className="h-4 w-4" />}
+              className="min-h-11 sm:min-h-0"
+            >
+              Kapsülü Oluştur ve İndir (.html)
+            </Button>
+
+            {generatedCapsule && (
+              <div className="space-y-2 pt-1">
+                <CapsuleSealBadge
+                  status="valid"
+                  fingerprint={generatedCapsule.fingerprint}
+                  createdAt={generatedCapsule.createdAt}
+                  note="Bu parmak izini denetçiye telefon veya e-posta gibi ayrı bir kanaldan iletin."
+                />
+                <p className="rounded-xl border border-tertip-border bg-tertip-surface p-2.5 text-[11px] leading-relaxed text-tertip-ink-muted">
+                  <strong>Güvenlik Notu:</strong> {CAPSULE_HONESTY_NOTE}
+                </p>
+              </div>
+            )}
+          </form>
+
+          {/* Verify Existing Capsule */}
+          <form
+            onSubmit={handleVerifyCapsule}
+            className="space-y-4 border-t border-tertip-border pt-5 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0"
+          >
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-tertip-ink-muted">
+                Kapsül Mührü Doğrula
+              </h3>
+              <p className="mt-1 text-xs text-tertip-ink-muted">
+                Bir <code className="font-mono">.html</code> denetçi kapsülünün
+                içeriğinin değiştirilip değiştirilmediğini yerel SHA-256 ile
+                doğrulayın.
+              </p>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-tertip-ink">
+                Denetçi Kapsülü Dosyası (.html)
+              </label>
+              <input
+                type="file"
+                required
+                accept=".html,text/html"
+                onChange={(e) => {
+                  setVerifyFile(e.target.files?.[0] ?? null);
+                  setVerifyResult(null);
+                }}
+                className="w-full rounded-xl border border-tertip-border bg-tertip-surface px-3 py-2 text-xs text-tertip-ink file:mr-3 file:rounded-lg file:border-0 file:bg-tertip-gold-soft file:px-3 file:py-1 file:text-xs file:font-medium file:text-tertip-gold"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-tertip-ink">
+                Beklenen Parmak İzi (Ayrı Kanaldan Alınan — İsteğe Bağlı)
+              </label>
+              <input
+                type="text"
+                value={verifyExpectedFp}
+                onChange={(e) => setVerifyExpectedFp(e.target.value)}
+                placeholder="ABCD-EF12-3456-7890"
+                className="w-full rounded-xl border border-tertip-border bg-tertip-surface px-3 py-2 font-mono text-xs text-tertip-ink focus:border-tertip-accent focus:outline-none"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              variant="secondary"
+              fullWidth
+              loading={verifyBusy}
+              icon={<ShieldCheck className="h-4 w-4" />}
+              className="min-h-11 sm:min-h-0"
+            >
+              Mührü Doğrula
+            </Button>
+
+            {verifyResult && (
+              <CapsuleSealBadge
+                status={
+                  verifyResult.valid && verifyResult.matchesExpected !== false
+                    ? 'valid'
+                    : 'invalid'
+                }
+                fingerprint={verifyResult.fingerprint || 'Geçersiz'}
+                createdAt={verifyResult.createdAt}
+                note={
+                  verifyResult.error
+                    ? verifyResult.error
+                    : verifyResult.matchesExpected === false
+                      ? 'Dosya iç mührü geçerli ancak ayrı kanaldan girilen beklenen parmak iziyle EŞLEŞMİYOR!'
+                      : verifyResult.valid
+                        ? 'Kapsül içeriği mühürlendiği andan bu yana değiştirilmemiş.'
+                        : 'Mühür bozuk: kapsül içeriği değiştirilmiş!'
+                }
+              />
+            )}
+          </form>
+        </div>
+      </Card>
 
       {/* Export & Import Grid */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
