@@ -51,14 +51,14 @@ export const StatCard: React.FC<StatCardProps> = ({
 
   const content = (
     <>
-      <div className="flex items-start justify-between gap-3">
-        <span className="text-xs font-medium tracking-wide uppercase text-[var(--tertip-ink-muted)]">
+      <div className="flex items-start justify-between gap-2 sm:gap-3 min-w-0">
+        <span className="text-[11px] sm:text-xs font-medium tracking-wide uppercase text-[var(--tertip-ink-muted)] leading-snug">
           {label}
         </span>
         {icon && (
           <span
             className={[
-              'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tertip-radius-sm)]',
+              'inline-flex h-7 w-7 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-[var(--tertip-radius-xs)] sm:rounded-[var(--tertip-radius-sm)]',
               iconBgClasses[tone],
             ].join(' ')}
             aria-hidden="true"
@@ -68,19 +68,19 @@ export const StatCard: React.FC<StatCardProps> = ({
         )}
       </div>
 
-      <div className="mt-3 flex items-baseline gap-2.5 flex-wrap">
-        <span className="font-[var(--tertip-font-display)] text-2xl sm:text-[1.7rem] font-semibold tracking-tight text-[var(--tertip-ink)] tertip-tabular">
+      <div className="mt-2 sm:mt-3 flex items-baseline gap-1.5 sm:gap-2.5 flex-wrap min-w-0">
+        <span className="font-[var(--tertip-font-display)] text-xl sm:text-2xl lg:text-[1.7rem] font-semibold tracking-tight text-[var(--tertip-ink)] tertip-tabular leading-tight break-words">
           {value}
         </span>
         {trend && (
           <span
             className={[
-              'inline-flex items-center gap-0.5 rounded-[var(--tertip-radius-full)] px-2 py-0.5 text-[11px] font-semibold tertip-tabular',
+              'inline-flex items-center gap-0.5 rounded-[var(--tertip-radius-full)] px-1.5 sm:px-2 py-0.5 text-[10.5px] sm:text-[11px] font-semibold tertip-tabular',
               trendClasses[trend.direction],
             ].join(' ')}
           >
-            {trend.direction === 'up' && <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />}
-            {trend.direction === 'down' && <ArrowDownRight className="h-3.5 w-3.5" aria-hidden="true" />}
+            {trend.direction === 'up' && <ArrowUpRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />}
+            {trend.direction === 'down' && <ArrowDownRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />}
             {trend.direction === 'neutral' && <Minus className="h-3 w-3" aria-hidden="true" />}
             {trend.value}
           </span>
@@ -88,7 +88,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       </div>
 
       {(sublabel || trend?.label) && (
-        <p className="mt-2 text-xs text-[var(--tertip-ink-muted)] leading-relaxed">
+        <p className="mt-1.5 sm:mt-2 text-[11px] sm:text-xs text-[var(--tertip-ink-muted)] leading-snug sm:leading-relaxed line-clamp-2">
           {sublabel ?? trend?.label}
         </p>
       )}
@@ -96,7 +96,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   );
 
   const baseClasses = [
-    'rounded-[var(--tertip-radius-md)] bg-[var(--tertip-surface)] border border-[var(--tertip-border)] p-5 shadow-[var(--tertip-shadow-xs)]',
+    'min-w-0 rounded-[var(--tertip-radius-md)] bg-[var(--tertip-surface)] border border-[var(--tertip-border)] p-3.5 sm:p-5 shadow-[var(--tertip-shadow-xs)]',
     interactiveClasses,
     className,
   ]

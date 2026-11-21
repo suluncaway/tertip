@@ -226,18 +226,18 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
       />
 
       {/* Two-Tab Segmented Switcher */}
-      <div className="inline-flex rounded-xl border border-tertip-border bg-tertip-surface-elevated p-1">
+      <div className="grid w-full grid-cols-2 rounded-xl border border-tertip-border bg-tertip-surface-elevated p-1 sm:inline-flex sm:w-auto">
         <button
           type="button"
           onClick={() => setActiveSection('reminders')}
-          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors sm:min-h-0 sm:gap-2 sm:px-4 sm:text-sm ${
             activeSection === 'reminders'
               ? 'bg-tertip-accent text-tertip-accent-ink shadow-xs'
               : 'text-tertip-ink-secondary hover:text-tertip-ink'
           }`}
         >
-          <CalendarClock className="h-4 w-4" />
-          Hatırlatıcılar & Süreçler
+          <CalendarClock className="h-4 w-4 shrink-0" />
+          <span className="truncate">Hatırlatıcılar</span>
           <span
             className={`rounded-full px-1.5 py-0.5 text-[11px] font-mono ${
               activeSection === 'reminders'
@@ -252,14 +252,14 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
         <button
           type="button"
           onClick={() => setActiveSection('assets')}
-          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors sm:min-h-0 sm:gap-2 sm:px-4 sm:text-sm ${
             activeSection === 'assets'
               ? 'bg-tertip-accent text-tertip-accent-ink shadow-xs'
               : 'text-tertip-ink-secondary hover:text-tertip-ink'
           }`}
         >
-          <Building2 className="h-4 w-4" />
-          Varlık & Alan Takibi
+          <Building2 className="h-4 w-4 shrink-0" />
+          <span className="truncate">Varlık & Alan</span>
           <span
             className={`rounded-full px-1.5 py-0.5 text-[11px] font-mono ${
               activeSection === 'assets'
@@ -275,14 +275,14 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
       {/* SECTION 1: REMINDERS */}
       {activeSection === 'reminders' && (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:overflow-visible sm:pb-0">
               {REMINDER_CATEGORIES.map((cat) => (
                 <button
                   key={cat.key}
                   type="button"
                   onClick={() => setCategoryFilter(cat.key)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`min-h-9 shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
                     categoryFilter === cat.key
                       ? 'bg-tertip-accent text-tertip-accent-ink'
                       : 'bg-tertip-surface-subtle text-tertip-ink-secondary hover:bg-tertip-border/60'
@@ -333,12 +333,12 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
                     padding="sm"
                     className={item.completed ? 'opacity-65' : ''}
                   >
-                    <div className="flex items-start justify-between gap-3 px-1">
-                      <div className="flex items-start gap-3 min-w-0">
+                    <div className="flex flex-col gap-3 px-1 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex items-start gap-2 min-w-0">
                         <button
                           type="button"
                           onClick={() => onToggleReminder(item.id)}
-                          className="mt-0.5 shrink-0 text-tertip-accent transition-transform hover:scale-110"
+                          className="-ml-2 -mt-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-tertip-accent transition-transform hover:bg-tertip-surface-subtle active:scale-95"
                           aria-label={
                             item.completed
                               ? `"${item.title}" görevini yeniden aç`
@@ -406,7 +406,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-2">
+                      <div className="flex shrink-0 items-center justify-between gap-2 pl-9 sm:justify-end sm:pl-0">
                         <span className="rounded-lg bg-tertip-surface-subtle px-2.5 py-1 font-mono text-xs text-tertip-ink-secondary">
                           {formatDateTr(item.dueDate)}
                         </span>
@@ -415,6 +415,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
                           size="sm"
                           aria-label={`${item.title} hatırlatıcısını sil`}
                           onClick={() => onDeleteReminder(item.id)}
+                          className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
                         >
                           <Trash2 className="h-4 w-4 text-tertip-danger" />
                         </Button>
@@ -443,7 +444,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:overflow-visible sm:pb-0">
               {(
                 [
                   ['all', 'Tümü'],
@@ -456,7 +457,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({
                   key={statusKey}
                   type="button"
                   onClick={() => setAssetStatusFilter(statusKey)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`min-h-9 shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
                     assetStatusFilter === statusKey
                       ? 'bg-tertip-accent text-tertip-accent-ink'
                       : 'bg-tertip-surface-subtle text-tertip-ink-secondary hover:bg-tertip-border/60'

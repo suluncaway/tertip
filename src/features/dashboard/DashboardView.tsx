@@ -217,7 +217,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   if (isEmpty) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         <SectionHeader
           eyebrow="OPERASYONEL KOMUTA MERKEZİ"
           title="Genel Bakış"
@@ -225,7 +225,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           as="h1"
         />
 
-        <Card variant="elevated" padding="lg">
+        <Card variant="elevated" padding="md">
           <EmptyState
             icon={<Sparkles className="h-7 w-7" />}
             title="Çalışma alanınız hazır — ilk belgenizi ekleyin"
@@ -236,8 +236,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 size="lg"
                 icon={<Upload className="h-4 w-4" />}
                 onClick={onUploadClick}
+                className="w-full sm:w-auto"
               >
-                Belge Yükle (Excel, PDF, PPTX, Görsel)
+                <span className="sm:hidden">Belge Seç / Fotoğraf Çek</span>
+                <span className="hidden sm:inline">
+                  Belge Yükle (Excel, PDF, PPTX, Görsel)
+                </span>
               </Button>
             }
             secondaryAction={
@@ -246,8 +250,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 size="lg"
                 icon={<Database className="h-4 w-4" />}
                 onClick={onLoadDemo}
+                className="w-full sm:w-auto"
               >
-                Örnek Hastane Verisini Yükle
+                <span className="sm:hidden">Örnek Veriyi Yükle</span>
+                <span className="hidden sm:inline">
+                  Örnek Hastane Verisini Yükle
+                </span>
               </Button>
             }
           />
@@ -340,7 +348,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       />
 
       {/* Executive KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           label="Toplam Hasta / Hacim"
           value={
@@ -453,7 +461,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           }
         >
           {hasFinancialSeries ? (
-            <div className="h-[310px] w-full">
+            <div className="h-56 w-full sm:h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart
                   data={workspace.chartSeries}
@@ -575,7 +583,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           }
         >
           {hasPatientSeries ? (
-            <div className="h-[310px] w-full">
+            <div className="h-56 w-full sm:h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={workspace.chartSeries}
@@ -684,11 +692,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     key={item.id}
                     className="flex items-start justify-between gap-3 py-3 first:pt-1 last:pb-1"
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-2.5 min-w-0">
                       <button
                         type="button"
                         onClick={() => onToggleReminder(item.id)}
-                        className="mt-0.5 text-tertip-ink-muted transition-colors hover:text-tertip-accent"
+                        className="-ml-2 -mt-1.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-tertip-ink-muted transition-colors hover:bg-tertip-surface-subtle hover:text-tertip-accent"
                         aria-label={`"${item.title}" görevini tamamla`}
                       >
                         <Circle className="h-4 w-4" />

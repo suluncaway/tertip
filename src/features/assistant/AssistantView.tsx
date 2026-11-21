@@ -676,8 +676,8 @@ export const AssistantView: React.FC<AssistantViewProps> = ({
       )}
 
       {/* Quick Suggested Question Chips */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1 text-xs font-medium text-tertip-ink-muted">
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:overflow-visible sm:pb-0">
+        <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-tertip-ink-muted">
           <Sparkles className="h-3.5 w-3.5 text-tertip-gold" />
           Hızlı Sorular:
         </span>
@@ -687,7 +687,7 @@ export const AssistantView: React.FC<AssistantViewProps> = ({
             type="button"
             onClick={() => void askQuestion(q)}
             disabled={isLoading}
-            className="rounded-full border border-tertip-border bg-tertip-surface px-3 py-1 text-xs font-medium text-tertip-ink-secondary transition-colors hover:border-tertip-accent hover:bg-tertip-accent-soft hover:text-tertip-accent disabled:opacity-50"
+            className="min-h-9 shrink-0 whitespace-nowrap rounded-full border border-tertip-border bg-tertip-surface px-3.5 py-1.5 text-xs font-medium text-tertip-ink-secondary transition-colors hover:border-tertip-accent hover:bg-tertip-accent-soft hover:text-tertip-accent disabled:opacity-50"
           >
             {q}
           </button>
@@ -743,7 +743,7 @@ export const AssistantView: React.FC<AssistantViewProps> = ({
         )}
 
         {/* Messages Feed */}
-        <div className="max-h-[460px] space-y-4 overflow-y-auto p-5">
+        <div className="max-h-[52vh] space-y-3.5 overflow-y-auto p-3.5 sm:max-h-[460px] sm:space-y-4 sm:p-5">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -752,7 +752,7 @@ export const AssistantView: React.FC<AssistantViewProps> = ({
               }`}
             >
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                className={`max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed sm:max-w-[85%] sm:px-4 sm:py-3 ${
                   msg.role === 'user'
                     ? 'bg-tertip-accent text-tertip-accent-ink'
                     : 'border border-tertip-border bg-tertip-surface-elevated text-tertip-ink'
@@ -798,20 +798,21 @@ export const AssistantView: React.FC<AssistantViewProps> = ({
         {/* Input Form */}
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-2 border-t border-tertip-border bg-tertip-surface-elevated p-3"
+          className="flex items-center gap-2 border-t border-tertip-border bg-tertip-surface-elevated p-2.5 sm:p-3"
         >
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Belgeleriniz ve operasyonel sayılar hakkında bir soru sorun..."
-            className="flex-1 rounded-xl border border-tertip-border bg-tertip-surface px-3.5 py-2.5 text-sm text-tertip-ink placeholder:text-tertip-ink-muted focus:border-tertip-accent focus:outline-none"
+            placeholder="Belgeleriniz ve sayılar hakkında soru sorun..."
+            className="min-h-11 min-w-0 flex-1 rounded-xl border border-tertip-border bg-tertip-surface px-3.5 py-2.5 text-sm text-tertip-ink placeholder:text-tertip-ink-muted focus:border-tertip-accent focus:outline-none"
           />
           <Button
             type="submit"
             variant="primary"
             loading={isLoading}
             icon={<Send className="h-4 w-4" />}
+            className="min-h-11 shrink-0"
           >
             Sor
           </Button>

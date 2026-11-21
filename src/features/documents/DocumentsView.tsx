@@ -169,7 +169,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
         }
       />
 
-      {/* Drag & Drop Multi-file Dropzone */}
+      {/* Compact Mobile Upload Bar + Desktop Drag & Drop Multi-file Dropzone */}
       <div
         role="button"
         tabIndex={0}
@@ -183,7 +183,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`group relative cursor-pointer rounded-2xl border-2 border-dashed p-7 text-center transition-all ${
+        className={`group relative cursor-pointer rounded-2xl border-2 border-dashed p-4 text-center transition-all sm:p-7 ${
           isDragging
             ? 'border-tertip-accent bg-tertip-accent-soft scale-[1.005]'
             : 'border-tertip-border bg-tertip-surface hover:border-tertip-accent/70 hover:bg-tertip-surface-elevated'
@@ -197,27 +197,55 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
           className="hidden"
           onChange={(e) => handleFilesSelected(e.target.files)}
         />
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-tertip-accent-soft text-tertip-accent transition-transform group-hover:scale-105">
-          <UploadCloud className="h-6 w-6" />
+
+        {/* Mobile-first compact upload bar */}
+        <div className="flex flex-col items-center gap-3 sm:hidden">
+          <div className="flex w-full items-center gap-3 text-left">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-tertip-accent-soft text-tertip-accent">
+              <UploadCloud className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-tertip-ink">
+                Dosya / Fotoğraf Seç
+              </p>
+              <p className="truncate text-[11px] text-tertip-ink-muted">
+                Excel, PDF, PPTX, görsel (OCR) · %100 yerel
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-tertip-accent px-4 py-2.5 text-sm font-medium text-tertip-accent-ink">
+            <UploadCloud className="h-4 w-4" />
+            Belge veya Fotoğraf Yükle
+          </span>
         </div>
-        <h2 className="mt-3 text-base font-semibold text-tertip-ink">
-          {isDragging
-            ? 'Dosyaları buraya bırakın'
-            : 'Belgeleri sürükleyip bırakın veya seçmek için tıklayın'}
-        </h2>
-        <p className="mt-1 text-xs text-tertip-ink-muted">
-          Desteklenen formatlar: <span className="font-mono">.xlsx, .xls, .csv, .pdf, .pptx, .png, .jpg, .webp, .txt</span>
-        </p>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-          <Badge variant="accent" size="sm">
-            Tablo & Grafik Çıkarımı
-          </Badge>
-          <Badge variant="gold" size="sm">
-            Otomatik Bakım & SUT Tarih Tespiti
-          </Badge>
-          <Badge variant="info" size="sm">
-            Türkçe + İngilizce Görsel OCR
-          </Badge>
+
+        {/* Desktop drag-and-drop view */}
+        <div className="hidden sm:block">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-tertip-accent-soft text-tertip-accent transition-transform group-hover:scale-105">
+            <UploadCloud className="h-6 w-6" />
+          </div>
+          <h2 className="mt-3 text-base font-semibold text-tertip-ink">
+            {isDragging
+              ? 'Dosyaları buraya bırakın'
+              : 'Belgeleri sürükleyip bırakın veya seçmek için tıklayın'}
+          </h2>
+          <p className="mt-1 text-xs text-tertip-ink-muted">
+            Desteklenen formatlar:{' '}
+            <span className="font-mono">
+              .xlsx, .xls, .csv, .pdf, .pptx, .png, .jpg, .webp, .txt
+            </span>
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <Badge variant="accent" size="sm">
+              Tablo & Grafik Çıkarımı
+            </Badge>
+            <Badge variant="gold" size="sm">
+              Otomatik Bakım & SUT Tarih Tespiti
+            </Badge>
+            <Badge variant="info" size="sm">
+              Türkçe + İngilizce Görsel OCR
+            </Badge>
+          </div>
         </div>
       </div>
 
@@ -249,7 +277,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:overflow-visible sm:pb-0">
             {(
               [
                 ['all', 'Tümü'],
@@ -265,7 +293,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
                 key={key}
                 type="button"
                 onClick={() => setKindFilter(key)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                className={`min-h-9 shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
                   kindFilter === key
                     ? 'bg-tertip-accent text-tertip-accent-ink'
                     : 'bg-tertip-surface-subtle text-tertip-ink-secondary hover:bg-tertip-border/60'
@@ -310,14 +338,14 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
             const meta = KIND_META[doc.kind];
             return (
               <Card key={doc.id} variant="default" padding="md">
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex items-start gap-3 min-w-0">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-tertip-surface-subtle text-tertip-accent">
                       {meta.icon}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <h3
-                        className="truncate text-sm font-semibold text-tertip-ink"
+                        className="break-words text-sm font-semibold text-tertip-ink sm:truncate"
                         title={doc.name}
                       >
                         {doc.name}
@@ -347,12 +375,13 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-1">
+                  <div className="flex shrink-0 items-center gap-1.5 self-end sm:self-auto">
                     <Button
                       variant="soft"
                       size="sm"
                       icon={<Eye className="h-3.5 w-3.5" />}
                       onClick={() => openPreview(doc)}
+                      className="min-h-10 sm:min-h-0"
                     >
                       İncele
                     </Button>
@@ -361,6 +390,7 @@ export const DocumentsView: React.FC<DocumentsViewProps> = ({
                       size="sm"
                       aria-label={`${doc.name} belgesini sil`}
                       onClick={() => onDeleteDocument(doc.id)}
+                      className="min-h-10 min-w-10 sm:min-h-0 sm:min-w-0"
                     >
                       <Trash2 className="h-4 w-4 text-tertip-danger" />
                     </Button>

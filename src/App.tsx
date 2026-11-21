@@ -357,7 +357,7 @@ export function App() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-xl border border-tertip-border bg-tertip-surface px-4 py-2.5 text-xs font-medium text-tertip-ink shadow-md"
+          className="fixed inset-x-4 bottom-20 z-50 flex items-center gap-2 rounded-xl border border-tertip-border bg-tertip-surface px-4 py-2.5 text-xs font-medium text-tertip-ink shadow-md lg:inset-x-auto lg:bottom-5 lg:right-5"
         >
           <CheckCircle2 className="h-4 w-4 shrink-0 text-tertip-success" />
           <span>{toast}</span>

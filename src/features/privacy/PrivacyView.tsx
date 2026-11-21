@@ -417,6 +417,7 @@ export const PrivacyView: React.FC<PrivacyViewProps> = ({
             variant="danger"
             icon={<Trash2 className="h-4 w-4" />}
             onClick={() => setClearModalOpen(true)}
+            className="min-h-11 w-full sm:min-h-0 sm:w-auto"
           >
             Belleği Temizle (Tüm Verileri Sıfırla)
           </Button>
